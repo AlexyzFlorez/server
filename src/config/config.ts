@@ -1,0 +1,1 @@
+export const SEED='clave-secreta-token-api-sisevent';
