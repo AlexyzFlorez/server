@@ -1,6 +1,9 @@
 import express,{Application} from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import administradorRoutes from './routes/administradorRoutes';
+import usuarioRoutes from './routes/usuarioRoutes';
+import editorRoutes from './routes/editorRoutes';
 
 import path from 'path';
 
@@ -18,7 +21,7 @@ class Servidor
     configuracion():void
     {
         this.app.set('port', process.env.PORT || 3000);
-     //   this.app.use(morgan('dev'));
+         this.app.use(morgan('dev'));
         this.app.use(cors());
         this.app.use(express.json());
         this.app.use(express.urlencoded({extended:true}));     
@@ -26,8 +29,9 @@ class Servidor
 
     routes():void
     {
-        this.app.use('/api/tt/usuario', usuarioRoutes);
-        this.app.use('/api/tt/administrador', administradorRoutes);
+        this.app.use('/api/sis-event/usuario', usuarioRoutes);
+        this.app.use('/api/sis-event/administrador', administradorRoutes);
+        this.app.use('/api/sis-event/editor', editorRoutes);
     
         this.app.use(express.static(path.join(__dirname,'public')));
     }
