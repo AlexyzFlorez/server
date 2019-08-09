@@ -7,7 +7,7 @@ export class Usuario {
     public apellido_materno?: string;
     public telefono?: string;
     public num_empleado?: string;
-    public departamento?: string;
+    public fk_id_departamento?: number;
     public correo?: string;
     public password?: string;
     public password2?: string;
