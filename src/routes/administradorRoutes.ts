@@ -12,7 +12,10 @@ class AdministradorRoutes
 
     configuracion()
     {
-        
+        this.router.get('/obtener-usuarios',administradorController.obtenerUsuarios);
+        this.router.put('/aceptar-usuario/:id',administradorController.aceptarUsuario);
+        this.router.delete('/rechazar-usuario/:id',administradorController.rechazarUsuario);
+        this.router.delete('/eliminar-usuario/:id',administradorController.eliminarUsuario);
     }
 }
 
