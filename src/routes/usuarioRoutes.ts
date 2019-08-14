@@ -12,9 +12,7 @@ class UsuarioRoutes
 
     configuracion()
     {
-         //Pestaña registro
-         this.router.post('/preregistrar-usuario',usuarioController.preregistrarUsuario);
-         this.router.get('/obtener-departamentos',usuarioController.obtenerDepartamentos);  
+        
     }
 }
 

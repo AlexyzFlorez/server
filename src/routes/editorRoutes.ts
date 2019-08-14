@@ -12,7 +12,13 @@ class EditorRoutes
 
     configuracion()
     {
-        
+        //Pestaña iniciar sesion
+        this.router.post('/iniciar-sesion',editorController.iniciarSesion);
+        this.router.post('/recuperar-password',editorController.recuperarPassword);
+
+        //Pestaña registro
+        this.router.post('/preregistrar-usuario',editorController.preregistrarUsuario);
+        this.router.get('/obtener-departamentos',editorController.obtenerDepartamentos); 
     }
 }
 

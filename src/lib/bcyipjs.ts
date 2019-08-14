@@ -16,7 +16,7 @@ class BcriptjsConfig
         let aceptada;
         if(bcript.compareSync(password,passwordBase) || password==passwordBase)
         {
-              aceptada=true;  
+            aceptada=true;  
         }
         else
         {
