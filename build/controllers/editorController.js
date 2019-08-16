@@ -176,5 +176,86 @@ class EditorController {
             }
         });
     }
+    obtenerPerfil(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Entra");
+            let errores = [];
+            try {
+                const idUsuario = req.params.id;
+                const usuario = yield database_1.default.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
+                console.log(usuario);
+                if (usuario[0].fk_id_departamento != null) {
+                    console.log("savbh");
+                    let departamentos = yield database_1.default.query(`SELECT * FROM departamento WHERE id_departamento=?`, usuario[0].fk_id_departamento);
+                    const departamento = departamentos[0].nombre;
+                    usuario[0].departamento = departamento;
+                    console.log(departamento);
+                }
+                else {
+                    console.log("vacio");
+                }
+                console.log(usuario);
+                res.json(usuario);
+            }
+            catch (e) {
+                console.log("Error metodo obtener perfil");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
+    actualizarPerfil(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                let usuario = new Usuario_1.Usuario();
+                const idUsuario = req.params.id;
+                const existe = yield database_1.default.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
+                if (existe.length > 0) {
+                    usuario.nombre = req.body.nombre;
+                    usuario.apellido_paterno = req.body.apellido_paterno;
+                    usuario.apellido_materno = req.body.apellido_materno;
+                    usuario.telefono = req.body.telefono;
+                    usuario.num_empleado = req.body.num_empleado;
+                    usuario.correo = req.body.correo;
+                    usuario.password = bcyipjs_1.bcriptjsConfig.encriptar(req.body.password);
+                    usuario.estado_registro = req.body.estado_registro;
+                    const departamento = yield database_1.default.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
+                    usuario.fk_id_departamento = departamento[0].id_departamento;
+                    //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
+                    const correoRegistrados = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
+                    if (correoRegistrados.length > 0) {
+                        errores.push("Usuario registrado");
+                    }
+                    const numEmpleados = yield database_1.default.query(`SELECT num_empleado FROM usuario WHERE num_empleado=?`, usuario.num_empleado);
+                    if (numEmpleados.length > 0) {
+                        errores.push("Num empleado registrado");
+                    }
+                    //SI HUBO ERRORES DE CAMPOS REGITRADOS
+                    if (errores.length > 0) {
+                        console.log("Hay campos invalidos en el servidor");
+                    }
+                    else {
+                        //INSERTAMOS DATOS---------------------------------------------
+                        console.log("No hay errores en la respuesta");
+                        yield database_1.default.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
+                        errores.push("Ninguno");
+                    }
+                }
+                else {
+                    errores.push("No existe");
+                }
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+            catch (e) {
+                console.log("Error metodo actualizar alumno");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
 }
 exports.editorController = new EditorController();

@@ -1,5 +1,6 @@
 import {Router} from 'express';
 import {editorController} from '../controllers/editorController'
+import { auth } from '../middleware/auth';
 
 class EditorRoutes
 {
@@ -18,7 +19,11 @@ class EditorRoutes
 
         //Pestaña registro
         this.router.post('/preregistrar-usuario',editorController.preregistrarUsuario);
-        this.router.get('/obtener-departamentos',editorController.obtenerDepartamentos); 
+        this.router.get('/obtener-departamentos',editorController.obtenerDepartamentos);
+        
+        //Pestaña perfil
+        this.router.get('/obtener-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.obtenerPerfil);
+        this.router.put('/actualizar-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.actualizarPerfil);
     }
 }
 

@@ -32,9 +32,9 @@ class Auth {
             });
         }
     }
-    verificarUsuario(req, res, next) {
+    verificarEditor(req, res, next) {
         var usuario = req.usuario;
-        if (usuario.tipo === "Normal") {
+        if (usuario.tipo === "Editor" || usuario.tipo === "Administrador") {
             next();
             return;
         }

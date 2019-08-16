@@ -41,11 +41,11 @@ class Auth
         }
     }
 
-    public verificarUsuario(req:any,res:any,next:any)
+    public verificarEditor(req:any,res:any,next:any)
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo==="Normal")
+        if(usuario.tipo==="Editor" || usuario.tipo==="Administrador")
         {
             next();
             return;

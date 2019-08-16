@@ -1,5 +1,6 @@
 import {Router} from 'express';
 import {administradorController} from '../controllers/administradorController'
+import { auth } from '../middleware/auth';
 
 class AdministradorRoutes
 {
@@ -12,10 +13,10 @@ class AdministradorRoutes
 
     configuracion()
     {
-        this.router.get('/obtener-usuarios',administradorController.obtenerUsuarios);
-        this.router.put('/aceptar-usuario/:id',administradorController.aceptarUsuario);
-        this.router.delete('/rechazar-usuario/:id',administradorController.rechazarUsuario);
-        this.router.delete('/eliminar-usuario/:id',administradorController.eliminarUsuario);
+        this.router.get('/obtener-usuarios',[auth.verificarToken,auth.verificarAdministrador],administradorController.obtenerUsuarios);
+        this.router.put('/aceptar-usuario/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.aceptarUsuario);
+        this.router.delete('/rechazar-usuario/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.rechazarUsuario);
+        this.router.delete('/eliminar-usuario/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.eliminarUsuario);
     }
 }
 
