@@ -110,7 +110,6 @@ class EditorController {
     }
     obtenerDepartamentos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Obteniendo departamentos");
             let errores = [];
             try {
                 const departamentos = yield database_1.default.query(`SELECT nombre FROM departamento`);
@@ -139,7 +138,7 @@ class EditorController {
                 //usuario.password=req.body.password; 
                 usuario.password = bcyipjs_1.bcriptjsConfig.encriptar(req.body.password);
                 usuario.estado_registro = req.body.estado_registro;
-                usuario.tipo = "Editor";
+                usuario.tipo = "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW";
                 //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
                 const correoRegistrados = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
                 if (correoRegistrados.length > 0) {
@@ -178,23 +177,15 @@ class EditorController {
     }
     obtenerPerfil(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Entra");
             let errores = [];
             try {
                 const idUsuario = req.params.id;
                 const usuario = yield database_1.default.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
-                console.log(usuario);
                 if (usuario[0].fk_id_departamento != null) {
-                    console.log("savbh");
                     let departamentos = yield database_1.default.query(`SELECT * FROM departamento WHERE id_departamento=?`, usuario[0].fk_id_departamento);
                     const departamento = departamentos[0].nombre;
                     usuario[0].departamento = departamento;
-                    console.log(departamento);
                 }
-                else {
-                    console.log("vacio");
-                }
-                console.log(usuario);
                 res.json(usuario);
             }
             catch (e) {
@@ -224,11 +215,11 @@ class EditorController {
                     const departamento = yield database_1.default.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
                     usuario.fk_id_departamento = departamento[0].id_departamento;
                     //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-                    const correoRegistrados = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
+                    const correoRegistrados = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=? AND id_usuario!=?`, [usuario.correo, idUsuario]);
                     if (correoRegistrados.length > 0) {
                         errores.push("Usuario registrado");
                     }
-                    const numEmpleados = yield database_1.default.query(`SELECT num_empleado FROM usuario WHERE num_empleado=?`, usuario.num_empleado);
+                    const numEmpleados = yield database_1.default.query(`SELECT num_empleado FROM usuario WHERE num_empleado=? AND id_usuario!=?`, [usuario.num_empleado, idUsuario]);
                     if (numEmpleados.length > 0) {
                         errores.push("Num empleado registrado");
                     }
@@ -239,7 +230,7 @@ class EditorController {
                     else {
                         //INSERTAMOS DATOS---------------------------------------------
                         console.log("No hay errores en la respuesta");
-                        yield database_1.default.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
+                        yield database_1.default.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, num_empleado=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
                         errores.push("Ninguno");
                     }
                 }

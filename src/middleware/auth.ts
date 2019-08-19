@@ -5,6 +5,7 @@ class Auth
 {
     public verificarToken(req:any,res:any,next:any)
     {
+        
         var token=req.query.token;
 
         jwt.verify(token,SEED,(err:any,decoded:any)=>{
@@ -26,7 +27,7 @@ class Auth
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo==="Administrador")
+        if(usuario.tipo==="$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom")
         {
             next();
             return;
@@ -45,7 +46,7 @@ class Auth
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo==="Editor" || usuario.tipo==="Administrador")
+        if(usuario.tipo==="$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW" || usuario.tipo==="$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom")
         {
             next();
             return;

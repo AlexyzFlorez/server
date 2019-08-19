@@ -40,7 +40,6 @@ class AdministradorController {
             let errores = [];
             try {
                 const idUsuario = req.params.id;
-                console.log(idUsuario);
                 yield database_1.default.query('UPDATE usuario SET estado_registro=? WHERE id_usuario=?', ["Registrado", idUsuario]);
                 errores.push("Ninguno");
                 let respuesta = { errores };
