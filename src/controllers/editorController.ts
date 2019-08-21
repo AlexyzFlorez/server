@@ -6,6 +6,7 @@ const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 var SEED = require('../config/config').SEED;
 import { email } from '../lib/nodemailer';
+import { VariablesGlobales } from '../models/VariablesGlobales';
 
 class EditorController {
   public async iniciarSesion(req: any, res: Response) {
@@ -164,6 +165,11 @@ class EditorController {
         usuario.fk_id_departamento = departamento[0].id_departamento;
 
         await db.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento) VALUES (?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento]);
+        
+        const correosAdministrador = await db.query(`SELECT correo FROM usuario WHERE tipo=?`,"$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom");
+        const correoAdministrador=correosAdministrador[0].correo;
+        
+        email.enviarCorreo(correoAdministrador,'Solicitud de registro',`<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
         //ENVIAMOS RESPUESTA
         let errores = [];
         errores.push("Ninguno");

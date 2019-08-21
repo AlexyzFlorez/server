@@ -2,18 +2,18 @@ import nodemailer from 'nodemailer';
 
 class Email
 {
-    public enviarCorreo(destinatario:string, asunto:string, cuerpo:string)
+    public enviarCorreo(destinatario:any, asunto:string, cuerpo:string)
     {
         let transporter=nodemailer.createTransport({
             service:'gmail',
             auth:{
-                user:'testproyectott@gmail.com',
-                pass:'MiProyecto07'
+                user:'testsisevent@gmail.com',
+                pass:'sisEventTesting'
             }
         });
         
         let emailOptions={
-            from:'testproyectott@gmail.com',
+            from:'testsisevent@gmail.com',
             to: destinatario,
             subject:asunto,
             html: cuerpo

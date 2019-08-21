@@ -12,13 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = __importDefault(require("../database"));
+const nodemailer_1 = require("../lib/nodemailer");
+const VariablesGlobales_1 = require("../models/VariablesGlobales");
 class AdministradorController {
     //Mostrar Titulares
     obtenerUsuarios(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             let errores = [];
             try {
-                const usuarios = yield database_1.default.query(`SELECT * FROM usuario`);
+                const usuarios = yield database_1.default.query(`SELECT * FROM usuario WHERE tipo=?`, "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW");
                 for (let i = 0; i < usuarios.length; i++) {
                     let idDepartamento = usuarios[i].fk_id_departamento;
                     let departamentos = yield database_1.default.query(`SELECT * FROM departamento WHERE id_departamento=?`, idDepartamento);
@@ -40,8 +42,11 @@ class AdministradorController {
             let errores = [];
             try {
                 const idUsuario = req.params.id;
+                const usuario = yield database_1.default.query(`SELECT correo FROM usuario WHERE id_usuario=?`, idUsuario);
+                const correoUsuario = usuario[0].correo;
                 yield database_1.default.query('UPDATE usuario SET estado_registro=? WHERE id_usuario=?', ["Registrado", idUsuario]);
                 errores.push("Ninguno");
+                nodemailer_1.email.enviarCorreo(correoUsuario, 'Respuesta a solicitud de registro a SisEvent', `<p>Tu solicitud de registro ha sido <strong>ACEPTADA </strong><a href="${VariablesGlobales_1.VariablesGlobales.dominio}/login">Ir a SisEvent</a></p>`);
                 let respuesta = { errores };
                 res.json(respuesta);
             }
@@ -59,10 +64,11 @@ class AdministradorController {
             try {
                 const idUsuario = req.params.id;
                 let usuario = yield database_1.default.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
-                let correo = usuario[0].correo;
+                let correoUsuario = usuario[0].correo;
                 //ENVIAR CORREO ELECTRONICO NOTIFICANDOLE
                 yield database_1.default.query(`DELETE FROM usuario WHERE id_usuario=?`, idUsuario);
                 errores.push("Ninguno");
+                nodemailer_1.email.enviarCorreo(correoUsuario, 'Respuesta a solicitud de registro a SisEvent', `<p>Tu solicitud de registro ha sido <strong>RECHAZADA</strong>.</p>`);
                 let respuesta = { errores };
                 res.json(respuesta);
             }

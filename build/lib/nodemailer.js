@@ -9,12 +9,12 @@ class Email {
         let transporter = nodemailer_1.default.createTransport({
             service: 'gmail',
             auth: {
-                user: 'testproyectott@gmail.com',
-                pass: 'MiProyecto07'
+                user: 'testsisevent@gmail.com',
+                pass: 'sisEventTesting'
             }
         });
         let emailOptions = {
-            from: 'testproyectott@gmail.com',
+            from: 'testsisevent@gmail.com',
             to: destinatario,
             subject: asunto,
             html: cuerpo
