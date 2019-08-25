@@ -18,6 +18,7 @@ const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 var SEED = require('../config/config').SEED;
 const nodemailer_1 = require("../lib/nodemailer");
+const VariablesGlobales_1 = require("../models/VariablesGlobales");
 class EditorController {
     iniciarSesion(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -73,6 +74,29 @@ class EditorController {
         });
     }
     //----------------------------------------------------------------------------------------------
+    validarCodigoPassword(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                let codigo = req.params.codigo;
+                const codigos = yield database_1.default.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
+                if (codigos.length > 0) {
+                    errores.push("Ninguno");
+                }
+                else {
+                    errores.push("Codigo incorrecto");
+                }
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+            catch (e) {
+                console.log("Error metodo validar codigo");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
     recuperarPassword(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             let errores = [];
@@ -89,10 +113,13 @@ class EditorController {
                     errores.push("Correo no registrado");
                 }
                 if (!banderaCorreo) {
-                    const passwordsUsuario = yield database_1.default.query(`SELECT password FROM usuario WHERE correo=?`, correo);
-                    const password = passwordsUsuario[0].password;
-                    console.log(correo);
-                    nodemailer_1.email.enviarCorreo(correo, 'Recuperación de contraseña', `<p>Tu Contraseña es:<strong style="color:red">${password}</strong></p>`);
+                    const usuario = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=?`, correo);
+                    const codigo = usuario[0].codigo_res_password;
+                    nodemailer_1.email.enviarCorreo(correo, 'Restablecimiento de contraseña', `
+        <div style='width:30vw; padding:50px; display:block; border:1px solid #16B4FC; text-align:center; margin:0 auto'>
+          <p style='width:100%; color:#53575A'>Haz solicitado el restablecimiento de tu contraseña en SisEvent</p>
+          <a href='${VariablesGlobales_1.VariablesGlobales.dominio}/restablecer-password/${codigo}' style='text-decoration:none; background:#16B4FC; color:#fff; border-radius:20px;padding:10px; font-size:14px; width:100%; display:block; text-align:center; margin:0 auto'>Restablecer contraseña</a>
+        </div>`);
                     errores.push("Ninguno");
                 }
                 else {
@@ -102,6 +129,33 @@ class EditorController {
                 res.json(respuesta);
             }
             catch (e) {
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
+    restablecerPassword(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                let password = req.body.password;
+                let codigo = req.body.codigo_res_password;
+                const codigos = yield database_1.default.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
+                if (codigos.length < 1) {
+                    errores.push("Codigo incorrecto");
+                }
+                else {
+                    let nuevaPassword = bcyipjs_1.bcriptjsConfig.encriptar(password);
+                    let nuevoCodigo = uuid();
+                    yield database_1.default.query('UPDATE usuario SET password=?, codigo_res_password=? WHERE codigo_res_password=?', [nuevaPassword, nuevoCodigo, codigo]);
+                    errores.push("Ninguno");
+                }
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+            catch (e) {
+                console.log("Error metodo restablecer codigo");
                 errores.push("Consultas");
                 let respuesta = { errores };
                 res.json(respuesta);
@@ -139,6 +193,7 @@ class EditorController {
                 usuario.password = bcyipjs_1.bcriptjsConfig.encriptar(req.body.password);
                 usuario.estado_registro = req.body.estado_registro;
                 usuario.tipo = "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW";
+                usuario.codigo_res_password = uuid();
                 //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
                 const correoRegistrados = yield database_1.default.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
                 if (correoRegistrados.length > 0) {
@@ -159,7 +214,7 @@ class EditorController {
                     console.log("No hay errores en la respuesta");
                     const departamento = yield database_1.default.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
                     usuario.fk_id_departamento = departamento[0].id_departamento;
-                    yield database_1.default.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento) VALUES (?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento]);
+                    yield database_1.default.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento, codigo_res_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento, usuario.codigo_res_password]);
                     const correosAdministrador = yield database_1.default.query(`SELECT correo FROM usuario WHERE tipo=?`, "$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom");
                     const correoAdministrador = correosAdministrador[0].correo;
                     nodemailer_1.email.enviarCorreo(correoAdministrador, 'Solicitud de registro', `<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);

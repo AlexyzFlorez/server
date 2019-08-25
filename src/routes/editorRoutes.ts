@@ -24,6 +24,10 @@ class EditorRoutes
         //Pestaña perfil
         this.router.get('/obtener-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.obtenerPerfil);
         this.router.put('/actualizar-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.actualizarPerfil);
+    
+        //Pestaña restablecer password
+        this.router.get('/validar-codigo-password/:codigo',editorController.validarCodigoPassword);
+        this.router.put('/restablecer-password/:codigo',editorController.restablecerPassword);
     }
 }
 

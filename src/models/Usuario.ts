@@ -13,7 +13,7 @@ export class Usuario {
     public password2?: string;
     public tipo?: string;
     public estado_registro?: string;
-  
+    public codigo_res_password?:string;
     constructor() {
   
     }
