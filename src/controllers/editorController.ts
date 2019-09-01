@@ -73,13 +73,12 @@ class EditorController {
   public async validarCodigoPassword(req: Request, res: Response) {
     let errores = [];
     try {
-      let codigo=req.params.codigo;
-      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`,codigo);
-      if(codigos.length>0)
-      {
+      let codigo = req.params.codigo;
+      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
+      if (codigos.length > 0) {
         errores.push("Ninguno")
       }
-      else{
+      else {
         errores.push("Codigo incorrecto")
       }
       let respuesta: any = { errores }
@@ -114,7 +113,7 @@ class EditorController {
       if (!banderaCorreo) {
         const usuario = await db.query(`SELECT * FROM usuario WHERE correo=?`, correo);
         const codigo = usuario[0].codigo_res_password;
-        
+
         email.enviarCorreo(correo, 'Restablecimiento de contraseña', `
         <div style='width:30vw; padding:50px; display:block; border:1px solid #16B4FC; text-align:center; margin:0 auto'>
           <p style='width:100%; color:#53575A'>Haz solicitado el restablecimiento de tu contraseña en SisEvent</p>
@@ -137,25 +136,24 @@ class EditorController {
   }
 
   public async restablecerPassword(req: Request, res: Response) {
-    let errores:any = [];
+    let errores: any = [];
     try {
-      
-      let password=req.body.password;
-      let codigo=req.body.codigo_res_password;
 
-      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`,codigo);
-      if(codigos.length<1)
-      {
+      let password = req.body.password;
+      let codigo = req.body.codigo_res_password;
+
+      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
+      if (codigos.length < 1) {
         errores.push("Codigo incorrecto")
       }
-      else{
+      else {
         let nuevaPassword = bcriptjsConfig.encriptar(password);
-        let nuevoCodigo=uuid();
+        let nuevoCodigo = uuid();
 
-        await db.query('UPDATE usuario SET password=?, codigo_res_password=? WHERE codigo_res_password=?', [nuevaPassword,nuevoCodigo,codigo]);
+        await db.query('UPDATE usuario SET password=?, codigo_res_password=? WHERE codigo_res_password=?', [nuevaPassword, nuevoCodigo, codigo]);
         errores.push("Ninguno")
       }
-    
+
       let respuesta: any = { errores }
       res.json(respuesta);
     }
@@ -181,6 +179,52 @@ class EditorController {
     }
   }
 
+  public async obtenerActividades(req: Request, res: Response) {
+    let errores = [];
+    try {
+      const actividades = await db.query(`SELECT nombre FROM actividad`);
+      res.json(actividades);
+    }
+    catch (e) {
+      console.log("Error metodo obtener actividades");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  public async obtenerCategorias(req: Request, res: Response) {
+    let errores = [];
+    try {
+      const categorias = await db.query(`SELECT nombre FROM categoria`);
+      res.json(categorias);
+    }
+    catch (e) {
+      console.log("Error metodo obtener categorias");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  public async registrarEvento(req: any, res: Response) {
+    let errores = [];
+    try {
+      //console.log(req
+      console.log(req.body)
+      console.log(req.file.filename);
+      errores.push("Ninguno")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+    catch (e) {
+      console.log("Error Metodo registrar evento");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
   public async preregistrarUsuario(req: Request, res: Response) {
     let errores = [];
     try {
@@ -196,7 +240,7 @@ class EditorController {
       usuario.password = bcriptjsConfig.encriptar(req.body.password);
       usuario.estado_registro = req.body.estado_registro;
       usuario.tipo = "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW";
-      usuario.codigo_res_password=uuid();
+      usuario.codigo_res_password = uuid();
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
       const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
@@ -224,12 +268,12 @@ class EditorController {
         const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
         usuario.fk_id_departamento = departamento[0].id_departamento;
 
-        await db.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento, codigo_res_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento,usuario.codigo_res_password]);
-        
-        const correosAdministrador = await db.query(`SELECT correo FROM usuario WHERE tipo=?`,"$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom");
-        const correoAdministrador=correosAdministrador[0].correo;
-        
-        email.enviarCorreo(correoAdministrador,'Solicitud de registro',`<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
+        await db.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento, codigo_res_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento, usuario.codigo_res_password]);
+
+        const correosAdministrador = await db.query(`SELECT correo FROM usuario WHERE tipo=?`, "$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom");
+        const correoAdministrador = correosAdministrador[0].correo;
+
+        email.enviarCorreo(correoAdministrador, 'Solicitud de registro', `<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
         //ENVIAMOS RESPUESTA
         let errores = [];
         errores.push("Ninguno");
@@ -286,7 +330,7 @@ class EditorController {
         usuario.estado_registro = req.body.estado_registro;
         const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
         usuario.fk_id_departamento = departamento[0].id_departamento;
-      
+
         //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
         const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=? AND id_usuario!=?`, [usuario.correo, idUsuario]);
 

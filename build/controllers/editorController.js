@@ -177,6 +177,55 @@ class EditorController {
             }
         });
     }
+    obtenerActividades(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                const actividades = yield database_1.default.query(`SELECT nombre FROM actividad`);
+                res.json(actividades);
+            }
+            catch (e) {
+                console.log("Error metodo obtener actividades");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
+    obtenerCategorias(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                const categorias = yield database_1.default.query(`SELECT nombre FROM categoria`);
+                res.json(categorias);
+            }
+            catch (e) {
+                console.log("Error metodo obtener categorias");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
+    registrarEvento(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                //console.log(req
+                console.log(req.body);
+                console.log(req.file.filename);
+                errores.push("Ninguno");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+            catch (e) {
+                console.log("Error Metodo registrar evento");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
     preregistrarUsuario(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             let errores = [];

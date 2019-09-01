@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import {editorController} from '../controllers/editorController'
 import { auth } from '../middleware/auth';
+import {multerConfig} from '../lib/multer';
 
 class EditorRoutes
 {
@@ -20,6 +21,8 @@ class EditorRoutes
         //Pestaña registro
         this.router.post('/preregistrar-usuario',editorController.preregistrarUsuario);
         this.router.get('/obtener-departamentos',editorController.obtenerDepartamentos);
+        this.router.get('/obtener-actividades',editorController.obtenerActividades);
+        this.router.get('/obtener-categorias',editorController.obtenerCategorias);
         
         //Pestaña perfil
         this.router.get('/obtener-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.obtenerPerfil);
@@ -28,6 +31,9 @@ class EditorRoutes
         //Pestaña restablecer password
         this.router.get('/validar-codigo-password/:codigo',editorController.validarCodigoPassword);
         this.router.put('/restablecer-password/:codigo',editorController.restablecerPassword);
+
+        //Registrar evento
+        this.router.post('/registrar-evento',[auth.verificarToken,auth.verificarEditor,multerConfig],editorController.registrarEvento);
     }
 }
 
