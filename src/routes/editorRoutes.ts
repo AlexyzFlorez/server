@@ -23,6 +23,8 @@ class EditorRoutes
         this.router.get('/obtener-departamentos',editorController.obtenerDepartamentos);
         this.router.get('/obtener-actividades',editorController.obtenerActividades);
         this.router.get('/obtener-categorias',editorController.obtenerCategorias);
+        this.router.get('/obtener-ponentes',editorController.obtenerPonentes);
+        this.router.get('/obtener-poblacion',editorController.obtenerPoblacion);
         
         //Pestaña perfil
         this.router.get('/obtener-perfil/:id',[auth.verificarToken,auth.verificarEditor],editorController.obtenerPerfil);

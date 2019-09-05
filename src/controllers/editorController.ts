@@ -207,13 +207,83 @@ class EditorController {
     }
   }
 
+  public async obtenerPonentes(req: Request, res: Response) {
+    let errores = [];
+    try {
+      
+      const ponentes = await db.query(`SELECT tipo FROM ponentes`);
+      
+      res.json(ponentes);
+    }
+    catch (e) {
+      console.log("Error metodo obtener ponentes");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  public async obtenerPoblacion(req: Request, res: Response) {
+    let errores = [];
+    try {
+      const poblacion = await db.query(`SELECT tipo FROM poblacion`);
+      res.json(poblacion);
+    }
+    catch (e) {
+      console.log("Error metodo obtener poblacion");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
   public async registrarEvento(req: any, res: Response) {
     let errores = [];
     try {
       //console.log(req
       console.log(req.body)
       console.log(req.file.filename);
-      errores.push("Ninguno")
+      let  id_usuario=req.body.id_usuario;
+      let  nombre=req.body.nombre;
+      let  departamento=req.body.departamento;
+      let  costo=req.body.costo;
+      let  tipo_actividad=req.body.tipo_actividad;
+      let  nombre_actividad=req.body.nombre_actividad;
+      let  categoria=req.body.categoria;
+      let  fecha_inicio=req.body.fecha_inicio;
+      let  fecha_termino=req.body.fecha_termino;
+      let  hora_inicio=req.body.hora_inicio;
+      let  descripcion=req.body.descripcion;
+      let  ponentes=req.body.ponentes;
+      let  poblacion=req.body.poblacion;
+      let  url_portada=req.file.filename;
+
+      if(tipo_actividad==="Otro")
+      {
+       // await db.query(`INSERT INTO actividad (nombre) VALUES (?)`, [nombre_actividad]);
+        await db.query(`INSERT INTO evento (costo) VALUES (?)`, [costo]);
+        tipo_actividad=nombre_actividad;
+      }
+
+      let id_evento=uuid();
+      let idsDepartamento= await db.query(`SELECT * FROM departamento WHERE nombre=?`, departamento);
+      let idDepartamento=idsDepartamento[0].id_departamento;
+
+      let idsCategoria= await db.query(`SELECT * FROM categoria WHERE nombre=?`, categoria);
+      let idCategoria=idsCategoria[0].id_categoria;
+
+      let idsActividad= await db.query(`SELECT * FROM actividad WHERE nombre=?`, tipo_actividad);
+      let idActividad=idsActividad[0].id_actividad;
+
+      let idsPonentes= await db.query(`SELECT * FROM ponentes WHERE tipo=?`, ponentes);
+      let idPonentes=idsPonentes[0].id_ponentes;
+
+      let idsPoblacion= await db.query(`SELECT * FROM poblacion WHERE tipo=?`, poblacion);
+      let idPoblacion=idsActividad[0].id_poblacion;
+
+      await db.query(`INSERT INTO evento (id_evento, nombre, costo, descripcion, url_portada, en_memeoria, fk_id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, fk_id_departamento, fk_id_actividad, fk_id_categoria, fk_id_ponentes, fk_id_poblacion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [costo]);
+
+      errores.push("Consultas")
       let respuesta: any = { errores }
       res.json(respuesta);
     }
