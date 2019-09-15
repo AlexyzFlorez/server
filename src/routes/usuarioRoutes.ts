@@ -12,7 +12,8 @@ class UsuarioRoutes
 
     configuracion()
     {
-        
+        //Sidebar actividades
+        this.router.get('/obtener-numero-eventos',usuarioController.obtenerNumeroEventos);
     }
 }
 

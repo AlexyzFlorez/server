@@ -296,7 +296,7 @@ class EditorController {
                 }
                 else {
                     if (tipo_actividad === "Otra") {
-                        yield database_1.default.query(`INSERT INTO actividad (nombre) VALUES (?)`, nombre_actividad);
+                        yield database_1.default.query(`INSERT INTO actividad (id_actividad,nombre) VALUES (?,?)`, [uuid(), nombre_actividad]);
                         tipo_actividad = nombre_actividad;
                     }
                     let id_evento = uuid();
@@ -311,6 +311,7 @@ class EditorController {
                     let idsPoblacion = yield database_1.default.query(`SELECT * FROM poblacion WHERE tipo=?`, poblacion);
                     let id_poblacion = idsPoblacion[0].id_poblacion;
                     yield database_1.default.query(`INSERT INTO evento (id_evento, nombre, costo, descripcion, url_portada, en_memoria, fk_id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, fk_id_departamento, fk_id_actividad, fk_id_categoria, fk_id_ponentes, fk_id_poblacion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [id_evento, nombre, costo, descripcion, url_portada, false, id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, id_departamento, id_actividad, id_categoria, id_ponentes, id_poblacion]);
+                    errores.push(id_evento);
                     errores.push("Ninguno");
                     let respuesta = { errores };
                     res.json(respuesta);
