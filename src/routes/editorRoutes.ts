@@ -14,6 +14,8 @@ class EditorRoutes
 
     configuracion()
     {
+        this.router.get('/existe-usuario/:id', [auth.verificarToken], editorController.existeUsuario);
+
         //Pestaña iniciar sesion
         this.router.post('/iniciar-sesion',editorController.iniciarSesion);
         this.router.post('/recuperar-password',editorController.recuperarPassword);

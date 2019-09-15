@@ -7,8 +7,35 @@ const jwt = require('jsonwebtoken');
 var SEED = require('../config/config').SEED;
 import { email } from '../lib/nodemailer';
 import { VariablesGlobales } from '../models/VariablesGlobales';
+import { fSystem } from '../lib/fileSystem';
 
 class EditorController {
+
+  public async existeUsuario(req: Request, res: Response) {
+    let errores = [];
+    try {
+      const idUsuario = req.params.id
+
+      const existe = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
+
+      if (existe.length > 0) {
+        errores.push("Ninguno")
+      }
+      else {
+        errores.push("No existe")
+      }
+
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+    catch (e) {
+      console.log("Error metodo existe usuario");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
   public async iniciarSesion(req: any, res: Response) {
     let errores = [];
     try {
@@ -210,9 +237,9 @@ class EditorController {
   public async obtenerPonentes(req: Request, res: Response) {
     let errores = [];
     try {
-      
+
       const ponentes = await db.query(`SELECT tipo FROM ponentes`);
-      
+
       res.json(ponentes);
     }
     catch (e) {
@@ -240,55 +267,70 @@ class EditorController {
   public async registrarEvento(req: any, res: Response) {
     let errores = [];
     try {
-      //console.log(req
-      console.log(req.body)
-      console.log(req.file.filename);
-      let  id_usuario=req.body.id_usuario;
-      let  nombre=req.body.nombre;
-      let  departamento=req.body.departamento;
-      let  costo=req.body.costo;
-      let  tipo_actividad=req.body.tipo_actividad;
-      let  nombre_actividad=req.body.nombre_actividad;
-      let  categoria=req.body.categoria;
-      let  fecha_inicio=req.body.fecha_inicio;
-      let  fecha_termino=req.body.fecha_termino;
-      let  hora_inicio=req.body.hora_inicio;
-      let  descripcion=req.body.descripcion;
-      let  ponentes=req.body.ponentes;
-      let  poblacion=req.body.poblacion;
-      let  url_portada=req.file.filename;
+      let id_usuario = req.body.id_usuario;
+      let nombre = req.body.nombre;
+      let departamento = req.body.departamento;
+      let costo = req.body.costo;
+      let tipo_actividad = req.body.tipo_actividad;
+      let nombre_actividad = req.body.nombre_actividad;
+      let categoria = req.body.categoria;
+      let fecha_inicio = req.body.fecha_inicio;
+      let fecha_termino = req.body.fecha_termino;
+      let hora_inicio = req.body.hora_inicio;
+      let hora_termino = req.body.hora_termino;
+      let descripcion = req.body.descripcion;
+      let ponentes = req.body.ponentes;
+      let poblacion = req.body.poblacion;
+      let url_portada = req.file.filename;
 
-      if(tipo_actividad==="Otro")
-      {
-       // await db.query(`INSERT INTO actividad (nombre) VALUES (?)`, [nombre_actividad]);
-        await db.query(`INSERT INTO evento (costo) VALUES (?)`, [costo]);
-        tipo_actividad=nombre_actividad;
+      if (tipo_actividad === "Otra") {
+
+        let actividades = await db.query(`SELECT * FROM actividad`);
+        for (let i = 0; i < actividades.length; i++) {
+          if ((actividades[i].nombre).toUpperCase() === nombre_actividad.toUpperCase()) {
+            errores.push("Actividad existente")
+          }
+        }
       }
 
-      let id_evento=uuid();
-      let idsDepartamento= await db.query(`SELECT * FROM departamento WHERE nombre=?`, departamento);
-      let idDepartamento=idsDepartamento[0].id_departamento;
+      if (errores.length > 0) {
+        let respuesta: any = { errores }
+        console.log("Hay campos invalidos en el servidor")
+        fSystem.eliminarArchivo(req.file.filename);
+        res.json(respuesta)
+      }
+      else {
+        if (tipo_actividad === "Otra") {
+          await db.query(`INSERT INTO actividad (nombre) VALUES (?)`,nombre_actividad);
+            tipo_actividad = nombre_actividad;
+        }
+ 
+        let id_evento = uuid();
+        let idsDepartamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, departamento);
+        let id_departamento = idsDepartamento[0].id_departamento;
 
-      let idsCategoria= await db.query(`SELECT * FROM categoria WHERE nombre=?`, categoria);
-      let idCategoria=idsCategoria[0].id_categoria;
+        let idsCategoria = await db.query(`SELECT * FROM categoria WHERE nombre=?`, categoria);
+        let id_categoria = idsCategoria[0].id_categoria;
 
-      let idsActividad= await db.query(`SELECT * FROM actividad WHERE nombre=?`, tipo_actividad);
-      let idActividad=idsActividad[0].id_actividad;
+        let idsActividad = await db.query(`SELECT * FROM actividad WHERE nombre=?`, tipo_actividad);
+        let id_actividad = idsActividad[0].id_actividad;
+    
+        let idsPonentes = await db.query(`SELECT * FROM ponentes WHERE tipo=?`, ponentes);
+        let id_ponentes = idsPonentes[0].id_ponentes;
 
-      let idsPonentes= await db.query(`SELECT * FROM ponentes WHERE tipo=?`, ponentes);
-      let idPonentes=idsPonentes[0].id_ponentes;
+        let idsPoblacion = await db.query(`SELECT * FROM poblacion WHERE tipo=?`, poblacion);
+        let id_poblacion = idsPoblacion[0].id_poblacion;
 
-      let idsPoblacion= await db.query(`SELECT * FROM poblacion WHERE tipo=?`, poblacion);
-      let idPoblacion=idsActividad[0].id_poblacion;
+        await db.query(`INSERT INTO evento (id_evento, nombre, costo, descripcion, url_portada, en_memoria, fk_id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, fk_id_departamento, fk_id_actividad, fk_id_categoria, fk_id_ponentes, fk_id_poblacion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [id_evento,nombre, costo, descripcion, url_portada, false, id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, id_departamento, id_actividad, id_categoria, id_ponentes, id_poblacion]);
 
-      await db.query(`INSERT INTO evento (id_evento, nombre, costo, descripcion, url_portada, en_memeoria, fk_id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, fk_id_departamento, fk_id_actividad, fk_id_categoria, fk_id_ponentes, fk_id_poblacion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [costo]);
-
-      errores.push("Consultas")
-      let respuesta: any = { errores }
-      res.json(respuesta);
+        errores.push("Ninguno")
+        let respuesta: any = { errores }
+        res.json(respuesta);
+      }
     }
     catch (e) {
-      console.log("Error Metodo registrar evento");
+      console.log("Error metodo registrar evento");
+      fSystem.eliminarArchivo(req.file.filename);
       errores.push("Consultas")
       let respuesta: any = { errores }
       res.json(respuesta);
@@ -306,7 +348,6 @@ class EditorController {
       usuario.telefono = req.body.telefono;
       usuario.num_empleado = req.body.num_empleado;
       usuario.correo = req.body.correo;
-      //usuario.password=req.body.password; 
       usuario.password = bcriptjsConfig.encriptar(req.body.password);
       usuario.estado_registro = req.body.estado_registro;
       usuario.tipo = "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW";
@@ -387,48 +428,42 @@ class EditorController {
     try {
       let usuario = new Usuario();
       const idUsuario = req.params.id
-      const existe = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
 
-      if (existe.length > 0) {
-        usuario.nombre = req.body.nombre;
-        usuario.apellido_paterno = req.body.apellido_paterno;
-        usuario.apellido_materno = req.body.apellido_materno;
-        usuario.telefono = req.body.telefono;
-        usuario.num_empleado = req.body.num_empleado;
-        usuario.correo = req.body.correo;
-        usuario.password = bcriptjsConfig.encriptar(req.body.password);
-        usuario.estado_registro = req.body.estado_registro;
-        const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
-        usuario.fk_id_departamento = departamento[0].id_departamento;
+      usuario.nombre = req.body.nombre;
+      usuario.apellido_paterno = req.body.apellido_paterno;
+      usuario.apellido_materno = req.body.apellido_materno;
+      usuario.telefono = req.body.telefono;
+      usuario.num_empleado = req.body.num_empleado;
+      usuario.correo = req.body.correo;
+      usuario.password = bcriptjsConfig.encriptar(req.body.password);
+      usuario.estado_registro = req.body.estado_registro;
+      const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
+      usuario.fk_id_departamento = departamento[0].id_departamento;
 
-        //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-        const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=? AND id_usuario!=?`, [usuario.correo, idUsuario]);
+      //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
+      const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=? AND id_usuario!=?`, [usuario.correo, idUsuario]);
 
-        if (correoRegistrados.length > 0) {
-          errores.push("Usuario registrado");
-        }
+      if (correoRegistrados.length > 0) {
+        errores.push("Usuario registrado");
+      }
 
-        const numEmpleados = await db.query(`SELECT num_empleado FROM usuario WHERE num_empleado=? AND id_usuario!=?`, [usuario.num_empleado, idUsuario]);
+      const numEmpleados = await db.query(`SELECT num_empleado FROM usuario WHERE num_empleado=? AND id_usuario!=?`, [usuario.num_empleado, idUsuario]);
 
-        if (numEmpleados.length > 0) {
-          errores.push("Num empleado registrado");
-        }
+      if (numEmpleados.length > 0) {
+        errores.push("Num empleado registrado");
+      }
 
-        //SI HUBO ERRORES DE CAMPOS REGITRADOS
-        if (errores.length > 0) {
-          console.log("Hay campos invalidos en el servidor")
-        }
-        else {
-          //INSERTAMOS DATOS---------------------------------------------
-          console.log("No hay errores en la respuesta")
-
-          await db.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, num_empleado=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
-
-          errores.push("Ninguno");
-        }
+      //SI HUBO ERRORES DE CAMPOS REGITRADOS
+      if (errores.length > 0) {
+        console.log("Hay campos invalidos en el servidor")
       }
       else {
-        errores.push("No existe")
+        //INSERTAMOS DATOS---------------------------------------------
+        console.log("No hay errores en la respuesta")
+
+        await db.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, num_empleado=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
+
+        errores.push("Ninguno");
       }
 
       let respuesta: any = { errores }
