@@ -10,6 +10,10 @@ class UsuarioRoutes {
     configuracion() {
         //Sidebar actividades
         this.router.get('/obtener-numero-eventos', usuarioController_1.usuarioController.obtenerNumeroEventos);
+        //Eventos
+        this.router.get('/obtener-nombre-actividad/:id', usuarioController_1.usuarioController.obtenerNombreActividad);
+        this.router.get('/obtener-eventos/:id', usuarioController_1.usuarioController.obtenerEventos);
+        this.router.get('/obtener-detalles-evento/:id', usuarioController_1.usuarioController.obtenerDetallesEvento);
     }
 }
 const usuarioRoutes = new UsuarioRoutes();
