@@ -38,6 +38,9 @@ class EditorRoutes
 
         //Registrar evento
         this.router.post('/registrar-evento',[auth.verificarToken,auth.verificarEditor,multerConfig],editorController.registrarEvento);
+
+        //Mis eventos
+        this.router.get('/obtener-mis-eventos/:idUsuario',[auth.verificarToken,auth.verificarEditor],editorController.obtenerMisEventos);
     }
 }
 

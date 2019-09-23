@@ -478,6 +478,42 @@ class EditorController {
     }
   }
 
+  public async obtenerMisEventos(req: Request, res: Response) {
+    let errores = [];
+    try {
+
+        let eventos;
+        let idUsuario=req.params.idUsuario;
+        eventos = await db.query(`SELECT * FROM evento WHERE fk_id_usuario=? ORDER BY fecha_inicio ASC `, idUsuario);
+
+        for (let i = 0; i < eventos.length; i++) {
+            let nombresDepartamentos=await db.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
+            eventos[i].departamento=nombresDepartamentos[0].nombre;
+
+            let nombresCategoria=await db.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, eventos[i].fk_id_categoria);
+            eventos[i].categoria=nombresCategoria[0].nombre;
+
+            
+            let nombresPonentes=await db.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, eventos[i].fk_id_ponentes);
+            eventos[i].ponentes=nombresPonentes[0].tipo;
+
+            let nombresPoblacion=await db.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, eventos[i].fk_id_poblacion);
+            eventos[i].poblacion=nombresPoblacion[0].tipo;
+
+            let nombresActividades=await db.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, eventos[i].fk_id_actividad);
+            eventos[i].actividad=nombresActividades[0].nombre;
+            
+        }
+        res.json(eventos);
+    }
+    catch (e) {
+        console.log("Error metodo obtener mis eventos");
+        errores.push("Consultas")
+        let respuesta: any = { errores }
+        res.json(respuesta);
+    }
+}
+
 }
 
 export const editorController = new EditorController();

@@ -69,11 +69,12 @@ class UsuarioController {
             let errores = [];
             try {
                 let eventos;
-                if (req.params.id == "7c3d4ab1-38e6-4406-87b5-ecee274e3f5b") {
+                let idActividad = req.params.idActividad;
+                if (idActividad == "7c3d4ab1-38e6-4406-87b5-ecee274e3f5b") {
                     eventos = yield database_1.default.query(`SELECT * FROM evento ORDER BY fecha_inicio ASC`);
                 }
                 else {
-                    eventos = yield database_1.default.query(`SELECT * FROM evento WHERE fk_id_actividad=? ORDER BY fecha_inicio ASC `, req.params.id);
+                    eventos = yield database_1.default.query(`SELECT * FROM evento WHERE fk_id_actividad=? ORDER BY fecha_inicio ASC `, idActividad);
                 }
                 for (let i = 0; i < eventos.length; i++) {
                     let nombresDepartamentos = yield database_1.default.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
@@ -116,6 +117,49 @@ class UsuarioController {
             }
             catch (e) {
                 console.log("Error metodo obtener detalles evento");
+                errores.push("Consultas");
+                let respuesta = { errores };
+                res.json(respuesta);
+            }
+        });
+    }
+    obtenerEventosCalendario(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let errores = [];
+            try {
+                let eventos = yield database_1.default.query(`SELECT * FROM evento`);
+                for (let i = 0; i < eventos.length; i++) {
+                    let nombresDepartamentos = yield database_1.default.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
+                    eventos[i].departamento = nombresDepartamentos[0].nombre;
+                    let nombresCategoria = yield database_1.default.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, eventos[i].fk_id_categoria);
+                    eventos[i].categoria = nombresCategoria[0].nombre;
+                    let nombresPonentes = yield database_1.default.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, eventos[i].fk_id_ponentes);
+                    eventos[i].ponentes = nombresPonentes[0].tipo;
+                    let nombresPoblacion = yield database_1.default.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, eventos[i].fk_id_poblacion);
+                    eventos[i].poblacion = nombresPoblacion[0].tipo;
+                    let nombresActividades = yield database_1.default.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, eventos[i].fk_id_actividad);
+                    eventos[i].actividad = nombresActividades[0].nombre;
+                    eventos[i].title = eventos[i].nombre;
+                    /*
+                    eventos[i].start=new Date(2019, 5, 12, 8, 30);
+                    eventos[i].end=new Date(2019, 5, 12, 8, 30);
+                    */
+                    /*
+                    let start;
+                    
+                    let fechaString=(eventos[i].fecha_inicio).toString();
+                    console.log(fechaString)
+                    //let soloFecha=eventos[i].fecha_inicio.substring(0,10);
+      
+                    //new Date(2019, 5, 12, 8, 30),
+                    let end;
+                    */
+                }
+                console.log(eventos);
+                res.json(eventos);
+            }
+            catch (e) {
+                console.log("Error metodo obtener eventos calendario");
                 errores.push("Consultas");
                 let respuesta = { errores };
                 res.json(respuesta);

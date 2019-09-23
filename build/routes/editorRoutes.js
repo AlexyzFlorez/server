@@ -29,6 +29,8 @@ class EditorRoutes {
         this.router.put('/restablecer-password/:codigo', editorController_1.editorController.restablecerPassword);
         //Registrar evento
         this.router.post('/registrar-evento', [auth_1.auth.verificarToken, auth_1.auth.verificarEditor, multer_1.multerConfig], editorController_1.editorController.registrarEvento);
+        //Mis eventos
+        this.router.get('/obtener-mis-eventos/:idUsuario', [auth_1.auth.verificarToken, auth_1.auth.verificarEditor], editorController_1.editorController.obtenerMisEventos);
     }
 }
 const editorRoutes = new EditorRoutes();
