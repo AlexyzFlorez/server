@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import db from '../database';
 import { email } from '../lib/nodemailer';
-import { VariablesGlobales } from '../models/VariablesGlobales';
+const config = require('../config/config');
+import Usuario from '../models/usuario.model';
 
 class AdministradorController {
     //Mostrar Titulares
@@ -9,14 +9,7 @@ class AdministradorController {
         let errores: any = [];
 
         try {
-            const usuarios = await db.query(`SELECT * FROM usuario WHERE tipo=?`,"$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW");
-            for (let i = 0; i < usuarios.length; i++) {
-                let idDepartamento = usuarios[i].fk_id_departamento;
-
-                let departamentos = await db.query(`SELECT * FROM departamento WHERE id_departamento=?`, idDepartamento);
-                let departamento = departamentos[0].nombre;
-                usuarios[i].nombre_departamento = departamento;
-            }
+            const usuarios=await Usuario.find({}).sort({nombre:1});
             res.json(usuarios);
         }
         catch (e) {
@@ -31,13 +24,15 @@ class AdministradorController {
         let errores = [];
         try {
             const idUsuario = req.params.id;
-            const usuario = await db.query(`SELECT correo FROM usuario WHERE id_usuario=?`,idUsuario);
-            const correoUsuario=usuario[0].correo;
 
-            await db.query('UPDATE usuario SET estado_registro=? WHERE id_usuario=?', ["Registrado", idUsuario]);
+            let usuario:any = await Usuario.find({ 'id_usuario': idUsuario });
+            const correoUsuario=usuario.correo;
+
+            await Usuario.findByIdAndUpdate(usuario.id_usuario, {estado_registro:"Registrado"});
+
             errores.push("Ninguno")
 
-            email.enviarCorreo(correoUsuario,'Respuesta a solicitud de registro a SisEvent',`<p>Tu solicitud de registro ha sido <strong>ACEPTADA </strong><a href="${VariablesGlobales.dominio}/login">Ir a SisEvent</a></p>`);
+            email.enviarCorreo(correoUsuario,'Respuesta a solicitud de registro a SisEvent',`<p>Tu solicitud de registro ha sido <strong>ACEPTADA </strong><a href="${config.URI_CLIENT}/login">Ir a SisEvent</a></p>`);
             let respuesta: any = { errores }
             res.json(respuesta);
 
@@ -55,11 +50,11 @@ class AdministradorController {
         try {
 
             const idUsuario = req.params.id;
-            let usuario = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
-            let correoUsuario = usuario[0].correo;
+            let usuario:any = await Usuario.find({ 'id_usuario': idUsuario });
+            const correoUsuario=usuario.correo;
 
             //ENVIAR CORREO ELECTRONICO NOTIFICANDOLE
-            await db.query(`DELETE FROM usuario WHERE id_usuario=?`, idUsuario);
+            await Usuario.findByIdAndDelete(usuario.id_usuario);
             errores.push("Ninguno")
 
             email.enviarCorreo(correoUsuario,'Respuesta a solicitud de registro a SisEvent',`<p>Tu solicitud de registro ha sido <strong>RECHAZADA</strong>.</p>`);
@@ -81,12 +76,12 @@ class AdministradorController {
         try {
 
             const idUsuario = req.params.id;
-            let usuario = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
-            let correo = usuario[0].correo;
+            let usuario:any = await Usuario.find({ 'id_usuario': idUsuario });
+            const correoUsuario=usuario.correo;
 
             //ENVIAR CORREO ELECTRONICO NOTIFICANDOLE
 
-            await db.query(`DELETE FROM usuario WHERE id_usuario=?`, idUsuario);
+            await Usuario.findByIdAndDelete(usuario.id_usuario);
             errores.push("Ninguno")
 
             let respuesta: any = { errores }

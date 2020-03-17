@@ -1,11 +1,13 @@
 import express,{Application} from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
-import administradorRoutes from './routes/administradorRoutes';
-import usuarioRoutes from './routes/usuarioRoutes';
-import editorRoutes from './routes/editorRoutes';
-
+const config = require('./config/config');
 import path from 'path';
+import database from './database';
+
+import administradorRoutes from './routes/administrador.routes';
+import usuarioRoutes from './routes/usuario.routes';
+import editorRoutes from './routes/editor.routes';
 
 class Servidor
 {
@@ -16,11 +18,12 @@ class Servidor
         this.app=express();
         this.configuracion();
         this.routes();
+        database();
     }
 
     configuracion():void
     {
-        this.app.set('port', process.env.PORT || 3000);
+        this.app.set('port', config.PORT || 3300);
          //this.app.use(morgan('dev'));
         this.app.use(cors());
         this.app.use(express.json());
@@ -29,9 +32,9 @@ class Servidor
 
     routes():void
     {
-        this.app.use('/api/sis-event/usuario', usuarioRoutes);
-        this.app.use('/api/sis-event/administrador', administradorRoutes);
-        this.app.use('/api/sis-event/editor', editorRoutes);
+        this.app.use(`${config.URI_API}/usuario`, usuarioRoutes);
+        this.app.use(`${config.URI_API}/administrador`, administradorRoutes);
+        this.app.use(`${config.URI_API}/editor`, editorRoutes);
     
         this.app.use(express.static(path.join(__dirname,'public')));
     }

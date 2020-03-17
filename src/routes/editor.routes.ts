@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {editorController} from '../controllers/editorController'
+import {editorController} from '../controllers/editor.controller'
 import { auth } from '../middleware/auth';
 import {multerConfig} from '../lib/multer';
 

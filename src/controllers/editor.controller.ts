@@ -1,13 +1,17 @@
 import { Request, Response } from 'express';
-import db from '../database';
-import { Usuario } from '../models/Usuario';
 import { bcriptjsConfig } from '../lib/bcyipjs';
 const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
-var SEED = require('../config/config').SEED;
 import { email } from '../lib/nodemailer';
-import { VariablesGlobales } from '../models/VariablesGlobales';
+const config = require('../config/config');
 import { fSystem } from '../lib/fileSystem';
+import Usuario from '../models/usuario.model';
+import Departamento from '../models/departamento.model';
+import Actividad from '../models/actividad.model';
+import Ponente from '../models/ponente.model';
+import Poblacion from '../models/poblacion.model';
+import Categoria from '../models/categoria.model';
+import Evento from '../models/evento.model';
 
 class EditorController {
 
@@ -16,9 +20,9 @@ class EditorController {
     try {
       const idUsuario = req.params.id
 
-      const existe = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
+      const usuario = await Usuario.find({ id_usuario: idUsuario });
 
-      if (existe.length > 0) {
+      if (usuario.length > 0) {
         errores.push("Ninguno")
       }
       else {
@@ -42,17 +46,17 @@ class EditorController {
       let correo = req.body.correo;
       let password = req.body.password;
 
-      const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=?`, correo);
+      let usuario: any = await Usuario.find({ correo: correo });
+
       let estadoUsuario;
 
-      if (correoRegistrados.length > 0) {
-        estadoUsuario = correoRegistrados[0].estado_registro;
+      if (usuario.length > 0) {
+        estadoUsuario = usuario.estado_registro;
         //Si existe el correo y esta registrado
         if (estadoUsuario == 'Registrado') {
-          const idUsuario = correoRegistrados[0].id_usuario;
+          const idUsuario = usuario.id_usuario;
 
-          const passwords = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
-          const passwordBase = passwords[0].password; //Contraseña de la base de datos
+          const passwordBase = usuario.password; //Contraseña de la base de datos
 
           if (!bcriptjsConfig.comparar(password, passwordBase)) {
             errores.push("Password incorrecta");
@@ -60,16 +64,16 @@ class EditorController {
             res.json(respuesta);
           }
           else {
-            const tipoUsuarios = await db.query(`SELECT * FROM usuario WHERE correo=?`, correo);
-            const tipoUsuario = tipoUsuarios[0].tipo;
+            let usuario2: any = await Usuario.find({ correo: correo });
+            const tipoUsuario = usuario2.tipo_usuario;
 
             //Crear TOKEN
             const usuario = new Usuario();
-            usuario.id_usuario = idUsuario;
-            usuario.correo = correo;
-            usuario.tipo = tipoUsuario;
+            usuario2.id_usuario = idUsuario;
+            usuario2.correo = correo;
+            usuario2.tipo = tipoUsuario;
 
-            var token = jwt.sign({ usuario: usuario }, SEED, { expiresIn: 14400 }); //usuario, clave, 4 horas de expiracion
+            var token = jwt.sign({ usuario: usuario }, config.SEED, { expiresIn: 14400 }); //usuario, clave, 4 horas de expiracion
 
             errores.push("Ninguno");
 
@@ -101,8 +105,9 @@ class EditorController {
     let errores = [];
     try {
       let codigo = req.params.codigo;
-      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
-      if (codigos.length > 0) {
+      let usuario: any = await Usuario.find({ codigo_res_password: codigo });
+
+      if (usuario.length > 0) {
         errores.push("Ninguno")
       }
       else {
@@ -127,9 +132,9 @@ class EditorController {
 
       let banderaCorreo = false;
 
-      const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=?`, correo);
+      let usuario: any = await Usuario.find({ correo: correo });
 
-      if (correoRegistrados.length > 0) {
+      if (usuario.length > 0) {
         banderaCorreo = false;
       }
       else {
@@ -138,13 +143,13 @@ class EditorController {
       }
 
       if (!banderaCorreo) {
-        const usuario = await db.query(`SELECT * FROM usuario WHERE correo=?`, correo);
-        const codigo = usuario[0].codigo_res_password;
+        let usuario: any = await Usuario.find({ correo: correo });
+        const codigo = usuario.codigo_res_password;
 
         email.enviarCorreo(correo, 'Restablecimiento de contraseña', `
         <div style='width:30vw; padding:50px; display:block; border:1px solid #16B4FC; text-align:center; margin:0 auto'>
           <p style='width:100%; color:#53575A'>Haz solicitado el restablecimiento de tu contraseña en SisEvent</p>
-          <a href='${VariablesGlobales.dominio}/restablecer-password/${codigo}' style='text-decoration:none; background:#16B4FC; color:#fff; border-radius:20px;padding:10px; font-size:14px; width:100%; display:block; text-align:center; margin:0 auto'>Restablecer contraseña</a>
+          <a href='${config.URI_CLIENT}/restablecer-password/${codigo}' style='text-decoration:none; background:#16B4FC; color:#fff; border-radius:20px;padding:10px; font-size:14px; width:100%; display:block; text-align:center; margin:0 auto'>Restablecer contraseña</a>
         </div>`
         );
         errores.push("Ninguno");
@@ -169,15 +174,17 @@ class EditorController {
       let password = req.body.password;
       let codigo = req.body.codigo_res_password;
 
-      const codigos = await db.query(`SELECT * FROM usuario WHERE codigo_res_password=?`, codigo);
-      if (codigos.length < 1) {
+      let usuario: any = await Usuario.find({ codigo_res_password: codigo });
+
+      if (usuario.length < 1) {
         errores.push("Codigo incorrecto")
       }
       else {
         let nuevaPassword = bcriptjsConfig.encriptar(password);
         let nuevoCodigo = uuid();
 
-        await db.query('UPDATE usuario SET password=?, codigo_res_password=? WHERE codigo_res_password=?', [nuevaPassword, nuevoCodigo, codigo]);
+        await Usuario.findByIdAndUpdate(codigo, { password: nuevaPassword, codigo_res_password: nuevoCodigo });
+
         errores.push("Ninguno")
       }
 
@@ -195,7 +202,7 @@ class EditorController {
   public async obtenerDepartamentos(req: Request, res: Response) {
     let errores = [];
     try {
-      const departamentos = await db.query(`SELECT nombre FROM departamento`);
+      let departamentos: any = await Departamento.find({});
       res.json(departamentos);
     }
     catch (e) {
@@ -209,7 +216,7 @@ class EditorController {
   public async obtenerActividades(req: Request, res: Response) {
     let errores = [];
     try {
-      const actividades = await db.query(`SELECT nombre FROM actividad`);
+      let actividades: any = await Actividad.find({});
       res.json(actividades);
     }
     catch (e) {
@@ -223,7 +230,7 @@ class EditorController {
   public async obtenerCategorias(req: Request, res: Response) {
     let errores = [];
     try {
-      const categorias = await db.query(`SELECT nombre FROM categoria`);
+      let categorias: any = await Categoria.find({});
       res.json(categorias);
     }
     catch (e) {
@@ -238,7 +245,7 @@ class EditorController {
     let errores = [];
     try {
 
-      const ponentes = await db.query(`SELECT tipo FROM ponentes`);
+      let ponentes: any = await Ponente.find({});
 
       res.json(ponentes);
     }
@@ -253,7 +260,7 @@ class EditorController {
   public async obtenerPoblacion(req: Request, res: Response) {
     let errores = [];
     try {
-      const poblacion = await db.query(`SELECT tipo FROM poblacion`);
+      let poblacion: any = await Poblacion.find({});
       res.json(poblacion);
     }
     catch (e) {
@@ -285,7 +292,7 @@ class EditorController {
 
       if (tipo_actividad === "Otra") {
 
-        let actividades = await db.query(`SELECT * FROM actividad`);
+        let actividades: any = await Actividad.find({});
         for (let i = 0; i < actividades.length; i++) {
           if ((actividades[i].nombre).toUpperCase() === nombre_actividad.toUpperCase()) {
             errores.push("Actividad existente")
@@ -301,27 +308,54 @@ class EditorController {
       }
       else {
         if (tipo_actividad === "Otra") {
-          await db.query(`INSERT INTO actividad (id_actividad,nombre) VALUES (?,?)`,[uuid(),nombre_actividad]);
-            tipo_actividad = nombre_actividad;
+          //Creamos el objeto con el schema que declaramos
+          let infoActividad = {
+            id_actividad: uuid(),
+            nombre: nombre_actividad
+          }
+          let actividad = new Actividad(infoActividad);
+          //Guardar en la base de datos
+          await actividad.save();
         }
- 
+
         let id_evento = uuid();
-        let idsDepartamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, departamento);
-        let id_departamento = idsDepartamento[0].id_departamento;
+        let departamentos: any = await Departamento.find({ nombre: departamento });
+        let id_departamento = departamentos.id_departamento;
 
-        let idsCategoria = await db.query(`SELECT * FROM categoria WHERE nombre=?`, categoria);
-        let id_categoria = idsCategoria[0].id_categoria;
+        let categorias: any = await Categoria.find({ nombre: categoria });
+        let id_categoria = categorias.id_categoria;
 
-        let idsActividad = await db.query(`SELECT * FROM actividad WHERE nombre=?`, tipo_actividad);
-        let id_actividad = idsActividad[0].id_actividad;
-    
-        let idsPonentes = await db.query(`SELECT * FROM ponentes WHERE tipo=?`, ponentes);
-        let id_ponentes = idsPonentes[0].id_ponentes;
+        let actividades: any = await Actividad.find({ nombre: tipo_actividad });
+        let id_actividad = actividades.id_actividad;
 
-        let idsPoblacion = await db.query(`SELECT * FROM poblacion WHERE tipo=?`, poblacion);
-        let id_poblacion = idsPoblacion[0].id_poblacion;
+        let ponente: any = await Ponente.find({ nombre: ponentes });
+        let id_ponentes = ponente.id_ponente;
 
-        await db.query(`INSERT INTO evento (id_evento, nombre, costo, descripcion, url_portada, en_memoria, fk_id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, fk_id_departamento, fk_id_actividad, fk_id_categoria, fk_id_ponentes, fk_id_poblacion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [id_evento,nombre, costo, descripcion, url_portada, false, id_usuario, fecha_inicio, fecha_termino, hora_inicio, hora_termino, id_departamento, id_actividad, id_categoria, id_ponentes, id_poblacion]);
+        let poblacion2: any = await Poblacion.find({ nombre: poblacion });
+        let id_poblacion = poblacion2.id_poblacion;
+
+        let infoEvento = {
+          id_evento: id_evento,
+          nombre: nombre,
+          costo: costo,
+          descripcion: descripcion,
+          url_portada: url_portada,
+          en_memoria: false,
+          id_usuario: id_usuario,
+          fecha_inicio: fecha_inicio,
+          fecha_termino: fecha_termino,
+          hora_inicio: hora_inicio,
+          hora_termino: hora_termino,
+          departamento: id_departamento,
+          tipo_actividad: id_actividad,
+          categoria: id_categoria,
+          ponentes: id_ponentes,
+          poblacion: id_poblacion,
+        }
+
+        let evento = new Evento(infoEvento);
+        //Guardar en la base de datos
+        await evento.save();
 
         errores.push(id_evento)
         errores.push("Ninguno")
@@ -341,27 +375,28 @@ class EditorController {
   public async preregistrarUsuario(req: Request, res: Response) {
     let errores = [];
     try {
-      let usuario = new Usuario();
-      usuario.id_usuario = uuid();
-      usuario.nombre = req.body.nombre;
-      usuario.apellido_paterno = req.body.apellido_paterno;
-      usuario.apellido_materno = req.body.apellido_materno;
-      usuario.telefono = req.body.telefono;
-      usuario.num_empleado = req.body.num_empleado;
-      usuario.correo = req.body.correo;
-      usuario.password = bcriptjsConfig.encriptar(req.body.password);
-      usuario.estado_registro = req.body.estado_registro;
-      usuario.tipo = "$2a$10$m3XP./02B3jWnBX1YV.Ua.vWD2LXw/oC81eAjnPaJrqV0ImnD3SxW";
-      usuario.codigo_res_password = uuid();
+      let nuevoUsuario: any = {
+        id_usuario: uuid(),
+        nombre: req.body.nombre,
+        apellido_paterno: req.body.apellido_paterno,
+        apellido_materno: req.body.apellido_materno,
+        telefono: req.body.telefono,
+        num_empleado: req.body.num_empleado,
+        correo: req.body.correo,
+        password: bcriptjsConfig.encriptar(req.body.password),
+        estado_registro: req.body.estado_registro,
+        tipo: config.TIPO_EDITOR,
+        codigo_res_password: uuid()
+      }
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-      const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=?`, usuario.correo);
+      const usuario = await Usuario.find({ correo: nuevoUsuario.correo });
 
-      if (correoRegistrados.length > 0) {
+      if (usuario.length > 0) {
         errores.push("Usuario registrado");
       }
 
-      const numEmpleados = await db.query(`SELECT num_empleado FROM usuario WHERE num_empleado=?`, usuario.num_empleado);
+      const numEmpleados = await Usuario.find({ num_empleado: nuevoUsuario.num_empleado });
 
       if (numEmpleados.length > 0) {
         errores.push("Num empleado registrado");
@@ -377,13 +412,15 @@ class EditorController {
         //INSERTAMOS DATOS---------------------------------------------
         console.log("No hay errores en la respuesta")
 
-        const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
-        usuario.fk_id_departamento = departamento[0].id_departamento;
+        const departamento: any = await Departamento.find({ nombre: req.body.departamento });
+        nuevoUsuario.departamento = departamento.id_departamento;
 
-        await db.query(`INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, num_empleado, telefono, correo, password, tipo, estado_registro, fk_id_departamento, codigo_res_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, [usuario.id_usuario, usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.num_empleado, usuario.telefono, usuario.correo, usuario.password, usuario.tipo, usuario.estado_registro, usuario.fk_id_departamento, usuario.codigo_res_password]);
+        let userios = new Usuario(nuevoUsuario);
+        //Guardar en la base de datos
+        await userios.save();
 
-        const correosAdministrador = await db.query(`SELECT correo FROM usuario WHERE tipo=?`, "$2a$10$kAuF.n3BG7N8rXpqKnGziOkk8jplw4DWVdkUshhsc3Bvt8YVx2Yom");
-        const correoAdministrador = correosAdministrador[0].correo;
+        const correosAdministrador: any = await Usuario.find({ tipo: config.TIPO_ADMINISTRADOR });
+        const correoAdministrador = correosAdministrador.correo;
 
         email.enviarCorreo(correoAdministrador, 'Solicitud de registro', `<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
         //ENVIAMOS RESPUESTA
@@ -406,12 +443,12 @@ class EditorController {
     let errores = [];
     try {
       const idUsuario = req.params.id
-      const usuario = await db.query(`SELECT * FROM usuario WHERE id_usuario=?`, idUsuario);
+      const usuario: any = await Usuario.find({ id_usuario: idUsuario });
 
-      if (usuario[0].fk_id_departamento != null) {
-        let departamentos = await db.query(`SELECT * FROM departamento WHERE id_departamento=?`, usuario[0].fk_id_departamento);
-        const departamento = departamentos[0].nombre;
-        usuario[0].departamento = departamento;
+      if (usuario.departamento != null) {
+        const departamentos: any = await Departamento.find({ id_departamento: usuario.departamento });
+        const departamento = departamentos.nombre;
+        usuario.departamento = departamento;
       }
 
       res.json(usuario);
@@ -427,28 +464,30 @@ class EditorController {
   public async actualizarPerfil(req: Request, res: Response) {
     let errores = [];
     try {
-      let usuario = new Usuario();
       const idUsuario = req.params.id
 
-      usuario.nombre = req.body.nombre;
-      usuario.apellido_paterno = req.body.apellido_paterno;
-      usuario.apellido_materno = req.body.apellido_materno;
-      usuario.telefono = req.body.telefono;
-      usuario.num_empleado = req.body.num_empleado;
-      usuario.correo = req.body.correo;
-      usuario.password = bcriptjsConfig.encriptar(req.body.password);
-      usuario.estado_registro = req.body.estado_registro;
-      const departamento = await db.query(`SELECT * FROM departamento WHERE nombre=?`, req.body.departamento);
-      usuario.fk_id_departamento = departamento[0].id_departamento;
+      let reqUsuario: any = {
+        nombre: req.body.nombre,
+        apellido_paterno: req.body.apellido_paterno,
+        apellido_materno: req.body.apellido_materno,
+        telefono: req.body.telefono,
+        num_empleado: req.body.num_empleado,
+        correo: req.body.correo,
+        password: bcriptjsConfig.encriptar(req.body.password),
+        estado_registro: req.body.estado_registro
+      }
+
+      const departamento: any = await Departamento.find({ nombre: req.body.departamento });
+      reqUsuario.departamento = departamento.id_departamento;
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-      const correoRegistrados = await db.query(`SELECT * FROM usuario WHERE correo=? AND id_usuario!=?`, [usuario.correo, idUsuario]);
+      const correoRegistrados: any = await Usuario.find({ correo: reqUsuario.correo, id_usuario: idUsuario });
 
       if (correoRegistrados.length > 0) {
         errores.push("Usuario registrado");
       }
 
-      const numEmpleados = await db.query(`SELECT num_empleado FROM usuario WHERE num_empleado=? AND id_usuario!=?`, [usuario.num_empleado, idUsuario]);
+      const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado, id_usuario: idUsuario });
 
       if (numEmpleados.length > 0) {
         errores.push("Num empleado registrado");
@@ -462,7 +501,8 @@ class EditorController {
         //INSERTAMOS DATOS---------------------------------------------
         console.log("No hay errores en la respuesta")
 
-        await db.query('UPDATE usuario SET nombre=?, apellido_paterno=?, apellido_materno=?, telefono=?, num_empleado=?, fk_id_departamento=?, correo=?, password=? WHERE id_usuario=?', [usuario.nombre, usuario.apellido_paterno, usuario.apellido_materno, usuario.telefono, usuario.num_empleado, usuario.fk_id_departamento, usuario.correo, usuario.password, idUsuario]);
+        await Usuario.findByIdAndUpdate(idUsuario, { nombre: reqUsuario.nombre, apellido_paterno: reqUsuario.apellido_paterno, apellido_materno: reqUsuario.apellido_materno, telefono: reqUsuario.telefono, num_empleado: reqUsuario.num_empleado, departamento: reqUsuario.departamento, correo: reqUsuario.correo, passoword: reqUsuario.password });
+
 
         errores.push("Ninguno");
       }
@@ -482,37 +522,36 @@ class EditorController {
     let errores = [];
     try {
 
-        let eventos;
-        let idUsuario=req.params.idUsuario;
-        eventos = await db.query(`SELECT * FROM evento WHERE fk_id_usuario=? ORDER BY fecha_inicio ASC `, idUsuario);
+      let idUsuario = req.params.idUsuario;
+      const eventos: any = await Evento.find({ id_usuario: idUsuario}).sort({hora_inicio:1});
 
-        for (let i = 0; i < eventos.length; i++) {
-            let nombresDepartamentos=await db.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
-            eventos[i].departamento=nombresDepartamentos[0].nombre;
+      for (let i = 0; i < eventos.length; i++) {
+        const nombresDepartamentos: any = await Departamento.find({ departamento: eventos[i].departamento});
+        eventos[i].departamento = nombresDepartamentos.nombre;
 
-            let nombresCategoria=await db.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, eventos[i].fk_id_categoria);
-            eventos[i].categoria=nombresCategoria[0].nombre;
+        const nombresCategoria: any = await Categoria.find({ categoria: eventos[i].categoria});
+        eventos[i].categoria = nombresCategoria.nombre;
 
-            
-            let nombresPonentes=await db.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, eventos[i].fk_id_ponentes);
-            eventos[i].ponentes=nombresPonentes[0].tipo;
 
-            let nombresPoblacion=await db.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, eventos[i].fk_id_poblacion);
-            eventos[i].poblacion=nombresPoblacion[0].tipo;
+        const nombresPonentes: any = await Ponente.find({ ponentes: eventos[i].ponentes});
+        eventos[i].ponentes = nombresPonentes.nombre;
 
-            let nombresActividades=await db.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, eventos[i].fk_id_actividad);
-            eventos[i].actividad=nombresActividades[0].nombre;
-            
-        }
-        res.json(eventos);
+        const nombresPoblacion: any = await Poblacion.find({ poblacion: eventos[i].poblacion});
+        eventos[i].poblacion = nombresPoblacion.nombre;
+
+        const nombresActividades: any = await Actividad.find({ tipo_actividad: eventos[i].id_actividad});
+        eventos[i].actividad = nombresActividades.nombre;
+
+      }
+      res.json(eventos);
     }
     catch (e) {
-        console.log("Error metodo obtener mis eventos");
-        errores.push("Consultas")
-        let respuesta: any = { errores }
-        res.json(respuesta);
+      console.log("Error metodo obtener mis eventos");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
     }
-}
+  }
 
 }
 

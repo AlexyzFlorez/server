@@ -1,12 +1,21 @@
-import mysql from 'promise-mysql';
-import keys from "./keys";
+import mongoose from 'mongoose';
+const config = require('./config/config');
 
-//Conexion
-const db=mysql.createPool(keys.database);
-db.getConnection()
-    .then(connection=>{
-        db.releaseConnection(connection);
-        console.log('Base de datos conectada');
-    });
+async function connect() {
+    try {
+        await mongoose.connect(config.MONGO_URI, {
+            useCreateIndex: true,
+            useNewUrlParser: true,
+            useFindAndModify: false,
+            useUnifiedTopology: true
+        });
 
-export default db;
+        console.log("Base de datos conectada")
+    } catch{
+        console.log("Error al conectar la base de datos")
+    }
+}
+
+export default connect;
+
+

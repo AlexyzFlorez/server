@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {usuarioController} from '../controllers/usuarioController'
+import {usuarioController} from '../controllers/usuario.controller'
 
 class UsuarioRoutes
 {
@@ -22,7 +22,6 @@ class UsuarioRoutes
 
         //Calendario
         this.router.get('/obtener-eventos-calendario',usuarioController.obtenerEventosCalendario);
-
     }
 }
 

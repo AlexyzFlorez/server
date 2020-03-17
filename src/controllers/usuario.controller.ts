@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-import db from '../database';
-import { Usuario } from '../models/Usuario';
 import { bcriptjsConfig } from '../lib/bcyipjs';
-const uuid = require('uuid/v4');
+import Departamento from '../models/departamento.model';
+import Actividad from '../models/actividad.model';
+import Ponente from '../models/ponente.model';
+import Poblacion from '../models/poblacion.model';
+import Categoria from '../models/categoria.model';
+import Evento from '../models/evento.model';
 
 class UsuarioController {
     public async obtenerNumeroEventos(req: Request, res: Response) {
@@ -10,8 +13,8 @@ class UsuarioController {
         let arregloActividades = [];
 
         try {
-            let actividades = await db.query(`SELECT * FROM actividad ORDER BY nombre ASC`);
-            let todosEventos = await db.query(`SELECT * FROM evento`);
+            const actividades: any = await Actividad.find().sort({nombre:1});
+            const todosEventos: any = await Evento.find();
 
             let elementoArreglo =
             {
@@ -23,7 +26,7 @@ class UsuarioController {
             arregloActividades.push(elementoArreglo)
 
             for (let i = 0; i < actividades.length; i++) {
-                let eventos = await db.query(`SELECT * FROM evento WHERE fk_id_actividad=?`, actividades[i].id_actividad);
+                let eventos: any = await Evento.find({ tipo_actividad: actividades[i].id_actividad });
                 let numeroEventos=eventos.length;
 
                 let elementoArreglo =
@@ -50,7 +53,7 @@ class UsuarioController {
         const idActividad = req.params.id;
        
         try {
-            let actividades = await db.query(`SELECT * FROM actividad WHERE id_actividad=?`, idActividad);
+            let actividades: any = await Actividad.find({ tipo_actividad: idActividad });
             
             let nombreActividad=actividades[0].nombre;
             res.json(nombreActividad);
@@ -68,33 +71,31 @@ class UsuarioController {
 
         try {
     
-            let eventos;
+            let eventos:any;
             let idActividad=req.params.idActividad;
             if(idActividad=="7c3d4ab1-38e6-4406-87b5-ecee274e3f5b")
             {
-                eventos = await db.query(`SELECT * FROM evento ORDER BY fecha_inicio ASC`);
+                const eventos: any = await Evento.find().sort({fecha_inicio:1});
             }
             else{
-                eventos = await db.query(`SELECT * FROM evento WHERE fk_id_actividad=? ORDER BY fecha_inicio ASC `, idActividad);
+                const eventos: any = await Evento.find({tipo_actividad:idActividad}).sort({fecha_inicio:1});
             }
 
             for (let i = 0; i < eventos.length; i++) {
-                let nombresDepartamentos=await db.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
+                const nombresDepartamentos: any = await Departamento.find({departamento:eventos[i].departamento});
                 eventos[i].departamento=nombresDepartamentos[0].nombre;
 
-                let nombresCategoria=await db.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, eventos[i].fk_id_categoria);
+                const nombresCategoria: any = await Categoria.find({categoria:eventos[i].categoria});
                 eventos[i].categoria=nombresCategoria[0].nombre;
 
-                
-                let nombresPonentes=await db.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, eventos[i].fk_id_ponentes);
+                const nombresPonentes: any = await Ponente.find({ponentes:eventos[i].ponentes});
                 eventos[i].ponentes=nombresPonentes[0].tipo;
 
-                let nombresPoblacion=await db.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, eventos[i].fk_id_poblacion);
+                const nombresPoblacion: any = await Poblacion.find({poblacion:eventos[i].poblacion});
                 eventos[i].poblacion=nombresPoblacion[0].tipo;
 
-                let nombresActividades=await db.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, eventos[i].fk_id_actividad);
+                const nombresActividades: any = await Actividad.find({tipo_actividad:eventos[i].tipo_actividad});
                 eventos[i].actividad=nombresActividades[0].nombre;
-                
             }
             
             res.json(eventos);
@@ -110,22 +111,21 @@ class UsuarioController {
     public async obtenerDetallesEvento(req: Request, res: Response) {
         let errores = [];
         try {
-            let evento = await db.query(`SELECT * FROM evento WHERE id_evento=?`, req.params.id);
+            const evento: any = await Evento.find({id_evento:req.params.id});
      
-            let nombresDepartamentos=await db.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, evento[0].fk_id_departamento);
+            const nombresDepartamentos: any = await Departamento.find({id_departamento:evento[0].departamento});
             evento[0].departamento=nombresDepartamentos[0].nombre;
 
-            let nombresCategoria=await db.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, evento[0].fk_id_categoria);
+            const nombresCategoria: any = await Categoria.find({id_categoria:evento[0].categoria});
             evento[0].categoria=nombresCategoria[0].nombre;
 
-            
-            let nombresPonentes=await db.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, evento[0].fk_id_ponentes);
-            evento[0].ponentes=nombresPonentes[0].tipo;
+            const nombresPonentes: any = await Ponente.find({id_ponentes:evento[0].ponentes});
+            evento[0].ponentes=nombresPonentes[0].nombre;
 
-            let nombresPoblacion=await db.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, evento[0].fk_id_poblacion);
-            evento[0].poblacion=nombresPoblacion[0].tipo;
+            const nombresPoblacion: any = await Poblacion.find({id_poblacion:evento[0].poblacion});
+            evento[0].poblacion=nombresPoblacion[0].nombre;
 
-            let nombresActividades=await db.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, evento[0].fk_id_actividad);
+            const nombresActividades: any = await Actividad.find({id_actividad:evento[0].tipo_actividad});
             evento[0].actividad=nombresActividades[0].nombre;
 
             res.json(evento[0]);
@@ -143,25 +143,24 @@ class UsuarioController {
 
         try {
 
-            let eventos = await db.query(`SELECT * FROM evento`);
+            const eventos: any = await Evento.find({});
 
             for (let i = 0; i < eventos.length; i++) {
-                let nombresDepartamentos=await db.query(`SELECT nombre FROM departamento WHERE id_departamento=?`, eventos[i].fk_id_departamento);
-                eventos[i].departamento=nombresDepartamentos[0].nombre;
 
-                let nombresCategoria=await db.query(`SELECT nombre FROM categoria WHERE id_categoria=?`, eventos[i].fk_id_categoria);
-                eventos[i].categoria=nombresCategoria[0].nombre;
-
-                
-                let nombresPonentes=await db.query(`SELECT tipo FROM ponentes WHERE id_ponentes=?`, eventos[i].fk_id_ponentes);
-                eventos[i].ponentes=nombresPonentes[0].tipo;
-
-                let nombresPoblacion=await db.query(`SELECT tipo FROM poblacion WHERE id_poblacion=?`, eventos[i].fk_id_poblacion);
-                eventos[i].poblacion=nombresPoblacion[0].tipo;
-
-                let nombresActividades=await db.query(`SELECT nombre FROM actividad WHERE id_actividad=?`, eventos[i].fk_id_actividad);
-                eventos[i].actividad=nombresActividades[0].nombre;
-                
+                const nombresDepartamentos: any = await Departamento.find({id_departamento:eventos[0].departamento});
+                eventos[0].departamento=nombresDepartamentos[0].nombre;
+    
+                const nombresCategoria: any = await Categoria.find({id_categoria:eventos[0].categoria});
+                eventos[0].categoria=nombresCategoria[0].nombre;
+    
+                const nombresPonentes: any = await Ponente.find({id_ponentes:eventos[0].ponentes});
+                eventos[0].ponentes=nombresPonentes[0].nombre;
+    
+                const nombresPoblacion: any = await Poblacion.find({id_poblacion:eventos[0].poblacion});
+                eventos[0].poblacion=nombresPoblacion[0].nombre;
+    
+                const nombresActividades: any = await Actividad.find({id_actividad:eventos[0].tipo_actividad});
+                eventos[0].actividad=nombresActividades[0].nombre;
                 
                 eventos[i].title=eventos[i].nombre;
                 /*

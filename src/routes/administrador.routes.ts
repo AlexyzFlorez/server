@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {administradorController} from '../controllers/administradorController'
+import {administradorController} from '../controllers/administrador.controller'
 import { auth } from '../middleware/auth';
 
 class AdministradorRoutes
