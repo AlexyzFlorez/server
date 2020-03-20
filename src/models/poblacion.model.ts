@@ -7,4 +7,4 @@ const PoblacionSchema=new Schema(
     }
 )
 
-export default model('poblacion', PoblacionSchema)
+export default model('poblaciones', PoblacionSchema)

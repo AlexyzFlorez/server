@@ -7,4 +7,4 @@ const DepartamentoSchema=new Schema(
     }
 )
 
-export default model('departamento', DepartamentoSchema)
+export default model('departamentos', DepartamentoSchema)

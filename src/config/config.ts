@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== "production") {
 module.exports = {
     PORT: process.env.PORT,
     URI_API: process.env.URI_API,
+    URI_CLIENT: process.env.URI_CLIENT,
     MONGO_URI: process.env.MONGO_URI,
     SEED: process.env.SEED,
     TIPO_EDITOR: process.env.TIPO_EDITOR,

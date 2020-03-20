@@ -7,4 +7,4 @@ const EvidenciaSchema=new Schema(
     }
 )
 
-export default model('evidencia', EvidenciaSchema)
+export default model('evidencias', EvidenciaSchema)

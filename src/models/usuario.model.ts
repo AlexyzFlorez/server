@@ -10,7 +10,7 @@ const UsuarioSchema=new Schema(
         num_empleado: String,
         departamento: {
             type: Schema.Types.ObjectId,
-            ref: "departamento",
+            ref: "departamentos",
             autopopulate: true
         },
         correo: String,
@@ -21,11 +21,11 @@ const UsuarioSchema=new Schema(
         eventos: [
             {
                 type: Schema.Types.ObjectId,
-                ref: "evento",
+                ref: "eventos",
                 autopopulate: true
             }
         ]
     }
 )
 
-export default model('usuario', UsuarioSchema)
+export default model('usuarios', UsuarioSchema)

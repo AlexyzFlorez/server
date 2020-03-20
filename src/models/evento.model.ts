@@ -7,18 +7,17 @@ const EventoSchema=new Schema(
         nombre: String,
         departamento: {
             type: Schema.Types.ObjectId,
-            ref: "departamento",
+            ref: "departamentos",
             autopopulate: true
         },
         costo: String,
         tipo_actividad: {
             type: Schema.Types.ObjectId,
-            ref: "actividad",
-            autopopulate: true
+            ref: "actividades"
         },
         categoria: {
             type: Schema.Types.ObjectId,
-            ref: "categoria",
+            ref: "categorias",
             autopopulate: true
         },
         fecha_inicio: String,
@@ -28,19 +27,19 @@ const EventoSchema=new Schema(
         descripcion: String,
         ponentes: {
             type: Schema.Types.ObjectId,
-            ref: "ponente",
+            ref: "ponentes",
             autopopulate: true
         },
         poblacion: {
             type: Schema.Types.ObjectId,
-            ref: "poblacion",
+            ref: "poblaciones",
             autopopulate: true
         },
         url_portada: String,
         evidencias: [
             {
                 type: Schema.Types.ObjectId,
-                ref: "evidencia",
+                ref: "evidencias",
                 autopopulate: true
             }
         ],
@@ -48,4 +47,4 @@ const EventoSchema=new Schema(
     }
 )
 
-export default model('evento', EventoSchema)
+export default model('eventos', EventoSchema)

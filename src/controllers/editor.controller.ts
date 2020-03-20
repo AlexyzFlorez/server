@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { bcriptjsConfig } from '../lib/bcyipjs';
+import { bcriptjsConfig } from '../lib/bcryptjs';
 const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 import { email } from '../lib/nodemailer';
@@ -40,6 +40,7 @@ class EditorController {
     }
   }
 
+  //Login
   public async iniciarSesion(req: any, res: Response) {
     let errores = [];
     try {
@@ -50,13 +51,14 @@ class EditorController {
 
       let estadoUsuario;
 
+      //Si el correo existe
       if (usuario.length > 0) {
-        estadoUsuario = usuario.estado_registro;
+        estadoUsuario = usuario[0].estado_registro;
         //Si existe el correo y esta registrado
         if (estadoUsuario == 'Registrado') {
-          const idUsuario = usuario.id_usuario;
+          const idUsuario = usuario[0].id_usuario;
 
-          const passwordBase = usuario.password; //Contraseña de la base de datos
+          const passwordBase = usuario[0].password; //Contraseña de la base de datos
 
           if (!bcriptjsConfig.comparar(password, passwordBase)) {
             errores.push("Password incorrecta");
@@ -65,13 +67,14 @@ class EditorController {
           }
           else {
             let usuario2: any = await Usuario.find({ correo: correo });
-            const tipoUsuario = usuario2.tipo_usuario;
+            const tipoUsuario = usuario2[0].tipo_usuario;
 
-            //Crear TOKEN
-            const usuario = new Usuario();
-            usuario2.id_usuario = idUsuario;
-            usuario2.correo = correo;
-            usuario2.tipo = tipoUsuario;
+            //Crear info para TOKEN
+            const usuario = {
+              id_usuario : idUsuario,
+              correo : correo,
+              tipo : tipoUsuario
+            }
 
             var token = jwt.sign({ usuario: usuario }, config.SEED, { expiresIn: 14400 }); //usuario, clave, 4 horas de expiracion
 
@@ -79,7 +82,6 @@ class EditorController {
 
             res.json({ errores: errores, token: token, usuarioToken: usuario });
           }
-
         }
         else {
           errores.push("Usuario no registrado");
@@ -100,7 +102,7 @@ class EditorController {
       res.json(respuesta);
     }
   }
-  //----------------------------------------------------------------------------------------------
+
   public async validarCodigoPassword(req: Request, res: Response) {
     let errores = [];
     try {
@@ -144,7 +146,7 @@ class EditorController {
 
       if (!banderaCorreo) {
         let usuario: any = await Usuario.find({ correo: correo });
-        const codigo = usuario.codigo_res_password;
+        const codigo = usuario[0].codigo_res_password;
 
         email.enviarCorreo(correo, 'Restablecimiento de contraseña', `
         <div style='width:30vw; padding:50px; display:block; border:1px solid #16B4FC; text-align:center; margin:0 auto'>
@@ -183,7 +185,7 @@ class EditorController {
         let nuevaPassword = bcriptjsConfig.encriptar(password);
         let nuevoCodigo = uuid();
 
-        await Usuario.findByIdAndUpdate(codigo, { password: nuevaPassword, codigo_res_password: nuevoCodigo });
+        await Usuario.findByIdAndUpdate(usuario[0]._id, { password: nuevaPassword, codigo_res_password: nuevoCodigo });
 
         errores.push("Ninguno")
       }
@@ -199,10 +201,79 @@ class EditorController {
     }
   }
 
+  //Registro
+  public async preregistrarUsuario(req: Request, res: Response) {
+    let errores = [];
+    try {
+      let nuevoUsuario: any = {
+        id_usuario: uuid(),
+        nombre: req.body.nombre,
+        apellido_paterno: req.body.apellido_paterno,
+        apellido_materno: req.body.apellido_materno,
+        telefono: req.body.telefono,
+        num_empleado: req.body.num_empleado,
+        correo: req.body.correo,
+        password: bcriptjsConfig.encriptar(req.body.password),
+        estado_registro: req.body.estado_registro,
+        tipo_usuario: config.TIPO_EDITOR,
+        codigo_res_password: uuid()
+      }
+
+      //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
+      const usuario = await Usuario.find({ correo: nuevoUsuario.correo });
+
+      if (usuario.length > 0) {
+        errores.push("Usuario registrado");
+      }
+
+      const numEmpleados = await Usuario.find({ num_empleado: nuevoUsuario.num_empleado });
+
+      if (numEmpleados.length > 0) {
+        errores.push("Num empleado registrado");
+      }
+
+      //SI HUBO ERRORES DE CAMPOS REGITRADOS
+      if (errores.length > 0) {
+        let respuesta: any = { errores }
+        console.log("Hay campos invalidos en el servidor")
+        res.json(respuesta)
+      }
+      else {
+        //INSERTAMOS DATOS---------------------------------------------
+        console.log("No hay errores en la respuesta")
+
+        const departamento: any = await Departamento.find({ nombre: req.body.departamento });
+        nuevoUsuario.departamento = departamento[0];
+
+        let usuario = new Usuario(nuevoUsuario);
+        //Guardar en la base de datos
+        await usuario.save();
+
+        const correosAdministrador: any = await Usuario.find({ tipo_usuario: config.TIPO_ADMINISTRADOR });
+        const correoAdministrador = correosAdministrador[0].correo;
+
+        email.enviarCorreo(correoAdministrador, 'Solicitud de registro', `<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
+        //ENVIAMOS RESPUESTA
+        let errores = [];
+        errores.push("Ninguno");
+        let respuesta: any = { errores }
+        res.json(respuesta);
+
+      }
+    }
+    catch (e) {
+      console.log("Error metodo preregistrar usuario");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  //Calendario-Modal registrar evento
   public async obtenerDepartamentos(req: Request, res: Response) {
     let errores = [];
     try {
-      let departamentos: any = await Departamento.find({});
+      let departamentos: any = await Departamento.find({}).sort({nombre:1});
       res.json(departamentos);
     }
     catch (e) {
@@ -216,7 +287,7 @@ class EditorController {
   public async obtenerActividades(req: Request, res: Response) {
     let errores = [];
     try {
-      let actividades: any = await Actividad.find({});
+      let actividades: any = await Actividad.find({}).sort({nombre:1});
       res.json(actividades);
     }
     catch (e) {
@@ -230,7 +301,7 @@ class EditorController {
   public async obtenerCategorias(req: Request, res: Response) {
     let errores = [];
     try {
-      let categorias: any = await Categoria.find({});
+      let categorias: any = await Categoria.find({}).sort({nombre:1});
       res.json(categorias);
     }
     catch (e) {
@@ -245,7 +316,7 @@ class EditorController {
     let errores = [];
     try {
 
-      let ponentes: any = await Ponente.find({});
+      let ponentes: any = await Ponente.find({}).sort({nombre:1});
 
       res.json(ponentes);
     }
@@ -260,7 +331,7 @@ class EditorController {
   public async obtenerPoblacion(req: Request, res: Response) {
     let errores = [];
     try {
-      let poblacion: any = await Poblacion.find({});
+      let poblacion: any = await Poblacion.find({}).sort({nombre:1});
       res.json(poblacion);
     }
     catch (e) {
@@ -372,78 +443,12 @@ class EditorController {
     }
   }
 
-  public async preregistrarUsuario(req: Request, res: Response) {
-    let errores = [];
-    try {
-      let nuevoUsuario: any = {
-        id_usuario: uuid(),
-        nombre: req.body.nombre,
-        apellido_paterno: req.body.apellido_paterno,
-        apellido_materno: req.body.apellido_materno,
-        telefono: req.body.telefono,
-        num_empleado: req.body.num_empleado,
-        correo: req.body.correo,
-        password: bcriptjsConfig.encriptar(req.body.password),
-        estado_registro: req.body.estado_registro,
-        tipo: config.TIPO_EDITOR,
-        codigo_res_password: uuid()
-      }
-
-      //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-      const usuario = await Usuario.find({ correo: nuevoUsuario.correo });
-
-      if (usuario.length > 0) {
-        errores.push("Usuario registrado");
-      }
-
-      const numEmpleados = await Usuario.find({ num_empleado: nuevoUsuario.num_empleado });
-
-      if (numEmpleados.length > 0) {
-        errores.push("Num empleado registrado");
-      }
-
-      //SI HUBO ERRORES DE CAMPOS REGITRADOS
-      if (errores.length > 0) {
-        let respuesta: any = { errores }
-        console.log("Hay campos invalidos en el servidor")
-        res.json(respuesta)
-      }
-      else {
-        //INSERTAMOS DATOS---------------------------------------------
-        console.log("No hay errores en la respuesta")
-
-        const departamento: any = await Departamento.find({ nombre: req.body.departamento });
-        nuevoUsuario.departamento = departamento.id_departamento;
-
-        let userios = new Usuario(nuevoUsuario);
-        //Guardar en la base de datos
-        await userios.save();
-
-        const correosAdministrador: any = await Usuario.find({ tipo: config.TIPO_ADMINISTRADOR });
-        const correoAdministrador = correosAdministrador.correo;
-
-        email.enviarCorreo(correoAdministrador, 'Solicitud de registro', `<p>Hay una nueva solicitud de registro al sistema SisEvent</p>`);
-        //ENVIAMOS RESPUESTA
-        let errores = [];
-        errores.push("Ninguno");
-        let respuesta: any = { errores }
-        res.json(respuesta);
-
-      }
-    }
-    catch (e) {
-      console.log("Error metodo preregistrar usuario");
-      errores.push("Consultas")
-      let respuesta: any = { errores }
-      res.json(respuesta);
-    }
-  }
-
+  //Perfil
   public async obtenerPerfil(req: Request, res: Response) {
     let errores = [];
     try {
       const idUsuario = req.params.id
-      const usuario: any = await Usuario.find({ id_usuario: idUsuario });
+      const usuario: any = await Usuario.find({ id_usuario: idUsuario }).populate('departamento');
 
       if (usuario.departamento != null) {
         const departamentos: any = await Departamento.find({ id_departamento: usuario.departamento });
@@ -466,6 +471,7 @@ class EditorController {
     try {
       const idUsuario = req.params.id
 
+
       let reqUsuario: any = {
         nombre: req.body.nombre,
         apellido_paterno: req.body.apellido_paterno,
@@ -474,22 +480,23 @@ class EditorController {
         num_empleado: req.body.num_empleado,
         correo: req.body.correo,
         password: bcriptjsConfig.encriptar(req.body.password),
-        estado_registro: req.body.estado_registro
+        estado_registro: req.body.estado_registro,
+        departamento:req.body.departamento
       }
 
-      const departamento: any = await Departamento.find({ nombre: req.body.departamento });
-      reqUsuario.departamento = departamento.id_departamento;
+      const departamento: any = await Departamento.find({ nombre: reqUsuario.departamento.nombre, });
+      reqUsuario.departamento=departamento[0];
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
-      const correoRegistrados: any = await Usuario.find({ correo: reqUsuario.correo, id_usuario: idUsuario });
+      const correoRegistrados: any = await Usuario.find({ correo: reqUsuario.correo });
 
-      if (correoRegistrados.length > 0) {
+      if (correoRegistrados.length > 0 && correoRegistrados[0].id_usuario!=idUsuario) {
         errores.push("Usuario registrado");
       }
 
-      const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado, id_usuario: idUsuario });
+      const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado});
 
-      if (numEmpleados.length > 0) {
+      if (numEmpleados.length > 0 && numEmpleados[0].id_usuario!=idUsuario) {
         errores.push("Num empleado registrado");
       }
 
@@ -501,8 +508,9 @@ class EditorController {
         //INSERTAMOS DATOS---------------------------------------------
         console.log("No hay errores en la respuesta")
 
-        await Usuario.findByIdAndUpdate(idUsuario, { nombre: reqUsuario.nombre, apellido_paterno: reqUsuario.apellido_paterno, apellido_materno: reqUsuario.apellido_materno, telefono: reqUsuario.telefono, num_empleado: reqUsuario.num_empleado, departamento: reqUsuario.departamento, correo: reqUsuario.correo, passoword: reqUsuario.password });
+        let usuario: any = await Usuario.find({ id_usuario: idUsuario });
 
+        await Usuario.findByIdAndUpdate(usuario[0]._id, { nombre: reqUsuario.nombre, apellido_paterno: reqUsuario.apellido_paterno, apellido_materno: reqUsuario.apellido_materno, telefono: reqUsuario.telefono, num_empleado: reqUsuario.num_empleado, departamento: reqUsuario.departamento, correo: reqUsuario.correo, password: reqUsuario.password });
 
         errores.push("Ninguno");
       }
@@ -518,28 +526,29 @@ class EditorController {
     }
   }
 
+  //Mis eventos
   public async obtenerMisEventos(req: Request, res: Response) {
     let errores = [];
     try {
 
       let idUsuario = req.params.idUsuario;
-      const eventos: any = await Evento.find({ id_usuario: idUsuario}).sort({hora_inicio:1});
+      const eventos: any = await Evento.find({ id_usuario: idUsuario }).sort({ hora_inicio: 1 });
 
       for (let i = 0; i < eventos.length; i++) {
-        const nombresDepartamentos: any = await Departamento.find({ departamento: eventos[i].departamento});
+        const nombresDepartamentos: any = await Departamento.find({ departamento: eventos[i].departamento });
         eventos[i].departamento = nombresDepartamentos.nombre;
 
-        const nombresCategoria: any = await Categoria.find({ categoria: eventos[i].categoria});
+        const nombresCategoria: any = await Categoria.find({ categoria: eventos[i].categoria });
         eventos[i].categoria = nombresCategoria.nombre;
 
 
-        const nombresPonentes: any = await Ponente.find({ ponentes: eventos[i].ponentes});
+        const nombresPonentes: any = await Ponente.find({ ponentes: eventos[i].ponentes });
         eventos[i].ponentes = nombresPonentes.nombre;
 
-        const nombresPoblacion: any = await Poblacion.find({ poblacion: eventos[i].poblacion});
+        const nombresPoblacion: any = await Poblacion.find({ poblacion: eventos[i].poblacion });
         eventos[i].poblacion = nombresPoblacion.nombre;
 
-        const nombresActividades: any = await Actividad.find({ tipo_actividad: eventos[i].id_actividad});
+        const nombresActividades: any = await Actividad.find({ tipo_actividad: eventos[i].id_actividad });
         eventos[i].actividad = nombresActividades.nombre;
 
       }

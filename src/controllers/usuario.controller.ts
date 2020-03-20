@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { bcriptjsConfig } from '../lib/bcyipjs';
+import { bcriptjsConfig } from '../lib/bcryptjs';
 import Departamento from '../models/departamento.model';
 import Actividad from '../models/actividad.model';
 import Ponente from '../models/ponente.model';
@@ -8,6 +8,7 @@ import Categoria from '../models/categoria.model';
 import Evento from '../models/evento.model';
 
 class UsuarioController {
+    //Menu lateral
     public async obtenerNumeroEventos(req: Request, res: Response) {
         let errores = [];
         let arregloActividades = [];
@@ -26,7 +27,7 @@ class UsuarioController {
             arregloActividades.push(elementoArreglo)
 
             for (let i = 0; i < actividades.length; i++) {
-                let eventos: any = await Evento.find({ tipo_actividad: actividades[i].id_actividad });
+                let eventos: any = await Evento.find({ tipo_actividad: actividades[i]});
                 let numeroEventos=eventos.length;
 
                 let elementoArreglo =
@@ -53,7 +54,7 @@ class UsuarioController {
         const idActividad = req.params.id;
        
         try {
-            let actividades: any = await Actividad.find({ tipo_actividad: idActividad });
+            let actividades: any = await Actividad.find({ id_actividad: idActividad });
             
             let nombreActividad=actividades[0].nombre;
             res.json(nombreActividad);
@@ -66,6 +67,7 @@ class UsuarioController {
         }
     }
 
+    //Eventos
     public async obtenerEventos(req: Request, res: Response) {
         let errores = [];
 
@@ -73,12 +75,17 @@ class UsuarioController {
     
             let eventos:any;
             let idActividad=req.params.idActividad;
+
+            let actividad={
+                id_actividad:idActividad
+            }
+
             if(idActividad=="7c3d4ab1-38e6-4406-87b5-ecee274e3f5b")
             {
-                const eventos: any = await Evento.find().sort({fecha_inicio:1});
+                 eventos = await Evento.find().sort({fecha_inicio:1});
             }
             else{
-                const eventos: any = await Evento.find({tipo_actividad:idActividad}).sort({fecha_inicio:1});
+                 eventos = await Evento.find({actividad}).sort({fecha_inicio:1});
             }
 
             for (let i = 0; i < eventos.length; i++) {
@@ -180,7 +187,6 @@ class UsuarioController {
                 */
             }
             
-            console.log(eventos)
             res.json(eventos);
         }
         catch (e) {

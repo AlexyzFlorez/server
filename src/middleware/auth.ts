@@ -5,7 +5,6 @@ class Auth
 {
     public verificarToken(req:any,res:any,next:any)
     {
-        
         var token=req.query.token;
 
         jwt.verify(token,config.SEED,(err:any,decoded:any)=>{
@@ -27,7 +26,7 @@ class Auth
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo===config.TIPO_EDITOR)
+        if(usuario.tipo===config.TIPO_ADMINISTRADOR)
         {
             next();
             return;

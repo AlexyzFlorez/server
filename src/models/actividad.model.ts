@@ -7,4 +7,4 @@ const ActividadSchema=new Schema(
     }
 )
 
-export default model('actividad', ActividadSchema)
+export default model('actividades', ActividadSchema);

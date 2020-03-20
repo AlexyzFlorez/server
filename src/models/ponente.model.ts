@@ -7,4 +7,4 @@ const PonenteSchema=new Schema(
     }
 )
 
-export default model('ponente', PonenteSchema)
+export default model('ponentes', PonenteSchema)
