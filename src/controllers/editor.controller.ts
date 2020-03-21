@@ -361,6 +361,7 @@ class EditorController {
       let descripcion = req.body.descripcion;
       let ponentes = req.body.ponentes;
       let poblacion = req.body.poblacion;
+      let solicitud_memoria = req.body.solicitud_memoria;
       let url_portada = req.file.filename;
 
       if (tipo_actividad === "Otra") {
@@ -420,6 +421,7 @@ class EditorController {
           categoria: categorias[0],
           ponentes: ponente[0],
           poblacion: poblacion2[0],
+          solicitud_memoria:solicitud_memoria,
           evidencias:[]
         }
 
@@ -523,25 +525,9 @@ class EditorController {
     try {
 
       let idUsuario = req.params.idUsuario;
-      const eventos: any = await Evento.find({ _id: idUsuario }).sort({ hora_inicio: 1 });
+      const usuario: any = await Usuario.find({ _id: idUsuario }).populate('departamento');
+      const eventos: any = await Evento.find({usuario: usuario[0] }).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
 
-      for (let i = 0; i < eventos.length; i++) {
-        const nombresDepartamentos: any = await Departamento.find({ departamento: eventos[i].departamento });
-        eventos[i].departamento = nombresDepartamentos.nombre;
-
-        const nombresCategoria: any = await Categoria.find({ categoria: eventos[i].categoria });
-        eventos[i].categoria = nombresCategoria.nombre;
-
-        const nombresPonentes: any = await Ponente.find({ ponentes: eventos[i].ponentes });
-        eventos[i].ponentes = nombresPonentes.nombre;
-
-        const nombresPoblacion: any = await Poblacion.find({ poblacion: eventos[i].poblacion });
-        eventos[i].poblacion = nombresPoblacion.nombre;
-
-        const nombresActividades: any = await Actividad.find({ tipo_actividad: eventos[i].id_actividad });
-        eventos[i].actividad = nombresActividades.nombre;
-
-      }
       res.json(eventos);
     }
     catch (e) {

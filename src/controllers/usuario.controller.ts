@@ -82,10 +82,10 @@ class UsuarioController {
 
             if(idActividad=="7c3d4ab1-38e6-4406-87b5-ecee274e3f5b")
             {
-                 eventos = await Evento.find().populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
+                 eventos = await Evento.find().populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion']).sort({fecha_inicio:1});
             }
             else{
-                 eventos = await Evento.find({tipo_actividad:actividad}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion','usuario']).sort({fecha_inicio:1});
+                 eventos = await Evento.find({tipo_actividad:actividad}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion']).sort({fecha_inicio:1});
             }
             
             res.json(eventos);
@@ -101,7 +101,7 @@ class UsuarioController {
     public async obtenerDetallesEvento(req: Request, res: Response) {
         let errores = [];
         try {
-            const evento: any = await Evento.find({_id:req.params.id}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']);
+            const evento: any = await Evento.find({_id:req.params.id}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion']);
 
             res.json(evento[0]);
         }
@@ -119,7 +119,7 @@ class UsuarioController {
 
         try {
 
-            const eventos: any = await Evento.find({}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
+            const eventos: any = await Evento.find({}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion']).sort({fecha_inicio:1});
             res.json(eventos);
         }
         catch (e) {

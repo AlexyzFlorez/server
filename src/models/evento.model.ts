@@ -47,6 +47,7 @@ const EventoSchema=new Schema(
                 autopopulate: true
             }
         ],
+        solicitud_memoria:String,
         en_memoria:Boolean
     }
 )
