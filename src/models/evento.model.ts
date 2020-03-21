@@ -2,8 +2,11 @@ import {Schema, model} from 'mongoose';
 
 const EventoSchema=new Schema(
     {
-        id_evento: String,
-        id_usuario: String,
+        usuario: {
+            type: Schema.Types.ObjectId,
+            ref: "usuarios",
+            autopopulate: true
+        },
         nombre: String,
         departamento: {
             type: Schema.Types.ObjectId,
@@ -13,7 +16,8 @@ const EventoSchema=new Schema(
         costo: String,
         tipo_actividad: {
             type: Schema.Types.ObjectId,
-            ref: "actividades"
+            ref: "actividades",
+            autopopulate: true
         },
         categoria: {
             type: Schema.Types.ObjectId,

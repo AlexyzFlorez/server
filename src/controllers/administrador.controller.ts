@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { email } from '../lib/nodemailer';
 const config = require('../config/config');
 import Usuario from '../models/usuario.model';
-import Departamento from '../models/departamento.model';
 
 class AdministradorController {
     //Usuarios
@@ -26,10 +25,9 @@ class AdministradorController {
         try {
             const idUsuario = req.params.id;
 
-            let usuario: any = await Usuario.find({ 'id_usuario': idUsuario });
-            const correoUsuario = usuario.correo;
-
-            await Usuario.findByIdAndUpdate(usuario.id_usuario, { estado_registro: "Registrado" });
+            let usuario: any = await Usuario.find({ '_id': idUsuario });
+            const correoUsuario = usuario[0].correo;
+            await Usuario.findByIdAndUpdate(idUsuario, { estado_registro: "Registrado" });
 
             errores.push("Ninguno")
 
@@ -51,11 +49,11 @@ class AdministradorController {
         try {
 
             const idUsuario = req.params.id;
-            let usuario: any = await Usuario.find({ 'id_usuario': idUsuario });
-            const correoUsuario = usuario.correo;
+            let usuario: any = await Usuario.find({ '_id': idUsuario });
+            const correoUsuario = usuario[0].correo;
 
             //ENVIAR CORREO ELECTRONICO NOTIFICANDOLE
-            await Usuario.findByIdAndDelete(usuario.id_usuario);
+            await Usuario.findByIdAndDelete(idUsuario);
             errores.push("Ninguno")
 
             email.enviarCorreo(correoUsuario, 'Respuesta a solicitud de registro a SisEvent', `<p>Tu solicitud de registro ha sido <strong>RECHAZADA</strong>.</p>`);
@@ -77,12 +75,7 @@ class AdministradorController {
         try {
 
             const idUsuario = req.params.id;
-            let usuario: any = await Usuario.find({ 'id_usuario': idUsuario });
-            const correoUsuario = usuario.correo;
-
-            //ENVIAR CORREO ELECTRONICO NOTIFICANDOLE
-
-            await Usuario.findByIdAndDelete(usuario.id_usuario);
+            await Usuario.findByIdAndDelete(idUsuario);
             errores.push("Ninguno")
 
             let respuesta: any = { errores }

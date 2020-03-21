@@ -19,7 +19,7 @@ class UsuarioController {
 
             let elementoArreglo =
             {
-                id:"7c3d4ab1-38e6-4406-87b5-ecee274e3f5b",
+                _id:"7c3d4ab1-38e6-4406-87b5-ecee274e3f5b",
                 nombre: "Todos",
                 numero: todosEventos.length
             }
@@ -32,7 +32,7 @@ class UsuarioController {
 
                 let elementoArreglo =
                 {
-                    id:actividades[i].id_actividad,
+                    _id:actividades[i]._id,
                     nombre: actividades[i].nombre,
                     numero: numeroEventos
                 }
@@ -54,7 +54,7 @@ class UsuarioController {
         const idActividad = req.params.id;
        
         try {
-            let actividades: any = await Actividad.find({ id_actividad: idActividad });
+            let actividades: any = await Actividad.find({ _id: idActividad });
             
             let nombreActividad=actividades[0].nombre;
             res.json(nombreActividad);
@@ -77,32 +77,15 @@ class UsuarioController {
             let idActividad=req.params.idActividad;
 
             let actividad={
-                id_actividad:idActividad
+                _id:idActividad
             }
 
             if(idActividad=="7c3d4ab1-38e6-4406-87b5-ecee274e3f5b")
             {
-                 eventos = await Evento.find().sort({fecha_inicio:1});
+                 eventos = await Evento.find().populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
             }
             else{
-                 eventos = await Evento.find({actividad}).sort({fecha_inicio:1});
-            }
-
-            for (let i = 0; i < eventos.length; i++) {
-                const nombresDepartamentos: any = await Departamento.find({departamento:eventos[i].departamento});
-                eventos[i].departamento=nombresDepartamentos[0].nombre;
-
-                const nombresCategoria: any = await Categoria.find({categoria:eventos[i].categoria});
-                eventos[i].categoria=nombresCategoria[0].nombre;
-
-                const nombresPonentes: any = await Ponente.find({ponentes:eventos[i].ponentes});
-                eventos[i].ponentes=nombresPonentes[0].tipo;
-
-                const nombresPoblacion: any = await Poblacion.find({poblacion:eventos[i].poblacion});
-                eventos[i].poblacion=nombresPoblacion[0].tipo;
-
-                const nombresActividades: any = await Actividad.find({tipo_actividad:eventos[i].tipo_actividad});
-                eventos[i].actividad=nombresActividades[0].nombre;
+                 eventos = await Evento.find({tipo_actividad:actividad}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion','usuario']).sort({fecha_inicio:1});
             }
             
             res.json(eventos);
@@ -118,22 +101,7 @@ class UsuarioController {
     public async obtenerDetallesEvento(req: Request, res: Response) {
         let errores = [];
         try {
-            const evento: any = await Evento.find({id_evento:req.params.id});
-     
-            const nombresDepartamentos: any = await Departamento.find({id_departamento:evento[0].departamento});
-            evento[0].departamento=nombresDepartamentos[0].nombre;
-
-            const nombresCategoria: any = await Categoria.find({id_categoria:evento[0].categoria});
-            evento[0].categoria=nombresCategoria[0].nombre;
-
-            const nombresPonentes: any = await Ponente.find({id_ponentes:evento[0].ponentes});
-            evento[0].ponentes=nombresPonentes[0].nombre;
-
-            const nombresPoblacion: any = await Poblacion.find({id_poblacion:evento[0].poblacion});
-            evento[0].poblacion=nombresPoblacion[0].nombre;
-
-            const nombresActividades: any = await Actividad.find({id_actividad:evento[0].tipo_actividad});
-            evento[0].actividad=nombresActividades[0].nombre;
+            const evento: any = await Evento.find({_id:req.params.id}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']);
 
             res.json(evento[0]);
         }
@@ -146,47 +114,12 @@ class UsuarioController {
     }
 
     public async obtenerEventosCalendario(req: Request, res: Response) {
+        console.log("Obtener eventos calendario")
         let errores = [];
 
         try {
 
-            const eventos: any = await Evento.find({});
-
-            for (let i = 0; i < eventos.length; i++) {
-
-                const nombresDepartamentos: any = await Departamento.find({id_departamento:eventos[0].departamento});
-                eventos[0].departamento=nombresDepartamentos[0].nombre;
-    
-                const nombresCategoria: any = await Categoria.find({id_categoria:eventos[0].categoria});
-                eventos[0].categoria=nombresCategoria[0].nombre;
-    
-                const nombresPonentes: any = await Ponente.find({id_ponentes:eventos[0].ponentes});
-                eventos[0].ponentes=nombresPonentes[0].nombre;
-    
-                const nombresPoblacion: any = await Poblacion.find({id_poblacion:eventos[0].poblacion});
-                eventos[0].poblacion=nombresPoblacion[0].nombre;
-    
-                const nombresActividades: any = await Actividad.find({id_actividad:eventos[0].tipo_actividad});
-                eventos[0].actividad=nombresActividades[0].nombre;
-                
-                eventos[i].title=eventos[i].nombre;
-                /*
-                eventos[i].start=new Date(2019, 5, 12, 8, 30);
-                eventos[i].end=new Date(2019, 5, 12, 8, 30);
-                */
-
-                /*
-                let start;
-                
-                let fechaString=(eventos[i].fecha_inicio).toString();
-                console.log(fechaString)
-                //let soloFecha=eventos[i].fecha_inicio.substring(0,10);
-  
-                //new Date(2019, 5, 12, 8, 30),
-                let end;
-                */
-            }
-            
+            const eventos: any = await Evento.find({}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
             res.json(eventos);
         }
         catch (e) {
@@ -196,7 +129,6 @@ class UsuarioController {
             res.json(respuesta);
         }
     }
-
 }
 
 export const usuarioController = new UsuarioController();

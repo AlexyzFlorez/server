@@ -49,11 +49,13 @@ class Servidor {
             console.log("Servidor en puerto:", this.app.get('port'));
 
             //this.registrarAdmin();
-            //opcionesSeleccionables.registrarDepartamentos();
-            //opcionesSeleccionables.registrarActividades();
-            //opcionesSeleccionables.registrarCategorias();
-            //opcionesSeleccionables.registrarPonentes();
-            //opcionesSeleccionables.registrarPoblacion();
+            /*
+            opcionesSeleccionables.registrarDepartamentos();
+            opcionesSeleccionables.registrarActividades();
+            opcionesSeleccionables.registrarCategorias();
+            opcionesSeleccionables.registrarPonentes();
+            opcionesSeleccionables.registrarPoblacion();
+            */
         });
     }
 
@@ -61,7 +63,6 @@ class Servidor {
         const departamento: any = await Departamento.find({ nombre: "Dirección" });
 
         let admin: any = {
-            id_usuario: uuid(),
             nombre: "Cesar Alexis",
             apellido_paterno: "Fajardo",
             apellido_materno: "Flores",

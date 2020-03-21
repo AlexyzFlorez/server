@@ -26,7 +26,7 @@ class Auth
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo===config.TIPO_ADMINISTRADOR)
+        if(usuario.tipo_usuario===config.TIPO_ADMINISTRADOR)
         {
             next();
             return;
@@ -45,7 +45,7 @@ class Auth
     {
         var usuario=req.usuario;
 
-        if(usuario.tipo===config.TIPO_EDITOR || usuario.tipo===config.TIPO_ADMINISTRADOR)
+        if(usuario.tipo_usuario===config.TIPO_EDITOR || usuario.tipo_usuario===config.TIPO_ADMINISTRADOR)
         {
             next();
             return;

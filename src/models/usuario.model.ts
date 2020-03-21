@@ -2,7 +2,6 @@ import {Schema, model} from 'mongoose';
 
 const UsuarioSchema=new Schema(
     {
-        id_usuario: String,
         nombre: String,
         apellido_paterno: String,
         apellido_materno: String,

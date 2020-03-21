@@ -19,7 +19,6 @@ class OpcionesSeleccionables
 
         for (let i = 0; i < nombresDepartamentos.length; i++) {
             let departamento = {
-                id_departamento: uuid(),
                 nombre: nombresDepartamentos[i]
             };
 
@@ -39,7 +38,6 @@ class OpcionesSeleccionables
 
         for (let i = 0; i < nombresActividades.length; i++) {
             let actividad = {
-                id_actividad: uuid(),
                 nombre: nombresActividades[i]
             };
 
@@ -64,7 +62,6 @@ class OpcionesSeleccionables
 
         for (let i = 0; i < nombresCategorias.length; i++) {
             let categoria = {
-                id_categoria: uuid(),
                 nombre: nombresCategorias[i]
             };
 
@@ -84,7 +81,6 @@ class OpcionesSeleccionables
 
         for (let i = 0; i < nombresPonentes.length; i++) {
             let ponente = {
-                id_ponente: uuid(),
                 nombre: nombresPonentes[i]
             };
 
@@ -104,7 +100,6 @@ class OpcionesSeleccionables
 
         for (let i = 0; i < nombresPoblaciones.length; i++) {
             let poblacion = {
-                id_ponente: uuid(),
                 nombre: nombresPoblaciones[i]
             };
 

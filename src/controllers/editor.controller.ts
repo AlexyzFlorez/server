@@ -20,7 +20,7 @@ class EditorController {
     try {
       const idUsuario = req.params.id
 
-      const usuario = await Usuario.find({ id_usuario: idUsuario });
+      const usuario = await Usuario.find({ _id: idUsuario });
 
       if (usuario.length > 0) {
         errores.push("Ninguno")
@@ -28,7 +28,7 @@ class EditorController {
       else {
         errores.push("No existe")
       }
-
+      
       let respuesta: any = { errores }
       res.json(respuesta);
     }
@@ -56,7 +56,7 @@ class EditorController {
         estadoUsuario = usuario[0].estado_registro;
         //Si existe el correo y esta registrado
         if (estadoUsuario == 'Registrado') {
-          const idUsuario = usuario[0].id_usuario;
+          const idUsuario = usuario[0]._id;
 
           const passwordBase = usuario[0].password; //Contraseña de la base de datos
 
@@ -71,9 +71,9 @@ class EditorController {
 
             //Crear info para TOKEN
             const usuario = {
-              id_usuario : idUsuario,
+              _id : idUsuario,
               correo : correo,
-              tipo : tipoUsuario
+              tipo_usuario : tipoUsuario
             }
 
             var token = jwt.sign({ usuario: usuario }, config.SEED, { expiresIn: 14400 }); //usuario, clave, 4 horas de expiracion
@@ -206,7 +206,6 @@ class EditorController {
     let errores = [];
     try {
       let nuevoUsuario: any = {
-        id_usuario: uuid(),
         nombre: req.body.nombre,
         apellido_paterno: req.body.apellido_paterno,
         apellido_materno: req.body.apellido_materno,
@@ -218,6 +217,7 @@ class EditorController {
         tipo_usuario: config.TIPO_EDITOR,
         codigo_res_password: uuid()
       }
+
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
       const usuario = await Usuario.find({ correo: nuevoUsuario.correo });
@@ -242,7 +242,7 @@ class EditorController {
         //INSERTAMOS DATOS---------------------------------------------
         console.log("No hay errores en la respuesta")
 
-        const departamento: any = await Departamento.find({ nombre: req.body.departamento });
+        const departamento: any = await Departamento.find({ nombre: req.body.departamento.nombre });
         nuevoUsuario.departamento = departamento[0];
 
         let usuario = new Usuario(nuevoUsuario);
@@ -345,12 +345,14 @@ class EditorController {
   public async registrarEvento(req: any, res: Response) {
     let errores = [];
     try {
-      let id_usuario = req.body.id_usuario;
+      let usuarios: any = await Usuario.find({_id:req.body.usuario});
+
+      let usuario = usuarios[0];
       let nombre = req.body.nombre;
       let departamento = req.body.departamento;
       let costo = req.body.costo;
       let tipo_actividad = req.body.tipo_actividad;
-      let nombre_actividad = req.body.nombre_actividad;
+      let nombre_actividad = req.body.actividad;
       let categoria = req.body.categoria;
       let fecha_inicio = req.body.fecha_inicio;
       let fecha_termino = req.body.fecha_termino;
@@ -381,54 +383,51 @@ class EditorController {
         if (tipo_actividad === "Otra") {
           //Creamos el objeto con el schema que declaramos
           let infoActividad = {
-            id_actividad: uuid(),
             nombre: nombre_actividad
           }
           let actividad = new Actividad(infoActividad);
           //Guardar en la base de datos
           await actividad.save();
+          
+        }
+        else{
+          nombre_actividad=tipo_actividad;
         }
 
-        let id_evento = uuid();
         let departamentos: any = await Departamento.find({ nombre: departamento });
-        let id_departamento = departamentos.id_departamento;
 
         let categorias: any = await Categoria.find({ nombre: categoria });
-        let id_categoria = categorias.id_categoria;
 
-        let actividades: any = await Actividad.find({ nombre: tipo_actividad });
-        let id_actividad = actividades.id_actividad;
+        let actividades: any = await Actividad.find({ nombre: nombre_actividad });
 
         let ponente: any = await Ponente.find({ nombre: ponentes });
-        let id_ponentes = ponente.id_ponente;
 
         let poblacion2: any = await Poblacion.find({ nombre: poblacion });
-        let id_poblacion = poblacion2.id_poblacion;
 
         let infoEvento = {
-          id_evento: id_evento,
           nombre: nombre,
           costo: costo,
           descripcion: descripcion,
           url_portada: url_portada,
           en_memoria: false,
-          id_usuario: id_usuario,
+          usuario: usuario,
           fecha_inicio: fecha_inicio,
           fecha_termino: fecha_termino,
           hora_inicio: hora_inicio,
           hora_termino: hora_termino,
-          departamento: id_departamento,
-          tipo_actividad: id_actividad,
-          categoria: id_categoria,
-          ponentes: id_ponentes,
-          poblacion: id_poblacion,
+          departamento: departamentos[0],
+          tipo_actividad: actividades[0],
+          categoria: categorias[0],
+          ponentes: ponente[0],
+          poblacion: poblacion2[0],
+          evidencias:[]
         }
 
         let evento = new Evento(infoEvento);
         //Guardar en la base de datos
         await evento.save();
 
-        errores.push(id_evento)
+        errores.push(evento._id)
         errores.push("Ninguno")
         let respuesta: any = { errores }
         res.json(respuesta);
@@ -448,14 +447,7 @@ class EditorController {
     let errores = [];
     try {
       const idUsuario = req.params.id
-      const usuario: any = await Usuario.find({ id_usuario: idUsuario }).populate('departamento');
-
-      if (usuario.departamento != null) {
-        const departamentos: any = await Departamento.find({ id_departamento: usuario.departamento });
-        const departamento = departamentos.nombre;
-        usuario.departamento = departamento;
-      }
-
+      const usuario: any = await Usuario.find({ _id: idUsuario }).populate('departamento');
       res.json(usuario);
     }
     catch (e) {
@@ -470,7 +462,6 @@ class EditorController {
     let errores = [];
     try {
       const idUsuario = req.params.id
-
 
       let reqUsuario: any = {
         nombre: req.body.nombre,
@@ -490,13 +481,13 @@ class EditorController {
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
       const correoRegistrados: any = await Usuario.find({ correo: reqUsuario.correo });
 
-      if (correoRegistrados.length > 0 && correoRegistrados[0].id_usuario!=idUsuario) {
+      if (correoRegistrados.length > 0 && correoRegistrados[0]._id!=idUsuario) {
         errores.push("Usuario registrado");
       }
 
       const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado});
 
-      if (numEmpleados.length > 0 && numEmpleados[0].id_usuario!=idUsuario) {
+      if (numEmpleados.length > 0 && numEmpleados[0]._id!=idUsuario) {
         errores.push("Num empleado registrado");
       }
 
@@ -508,7 +499,7 @@ class EditorController {
         //INSERTAMOS DATOS---------------------------------------------
         console.log("No hay errores en la respuesta")
 
-        let usuario: any = await Usuario.find({ id_usuario: idUsuario });
+        let usuario: any = await Usuario.find({ _id: idUsuario });
 
         await Usuario.findByIdAndUpdate(usuario[0]._id, { nombre: reqUsuario.nombre, apellido_paterno: reqUsuario.apellido_paterno, apellido_materno: reqUsuario.apellido_materno, telefono: reqUsuario.telefono, num_empleado: reqUsuario.num_empleado, departamento: reqUsuario.departamento, correo: reqUsuario.correo, password: reqUsuario.password });
 
@@ -532,7 +523,7 @@ class EditorController {
     try {
 
       let idUsuario = req.params.idUsuario;
-      const eventos: any = await Evento.find({ id_usuario: idUsuario }).sort({ hora_inicio: 1 });
+      const eventos: any = await Evento.find({ _id: idUsuario }).sort({ hora_inicio: 1 });
 
       for (let i = 0; i < eventos.length; i++) {
         const nombresDepartamentos: any = await Departamento.find({ departamento: eventos[i].departamento });
@@ -540,7 +531,6 @@ class EditorController {
 
         const nombresCategoria: any = await Categoria.find({ categoria: eventos[i].categoria });
         eventos[i].categoria = nombresCategoria.nombre;
-
 
         const nombresPonentes: any = await Ponente.find({ ponentes: eventos[i].ponentes });
         eventos[i].ponentes = nombresPonentes.nombre;
