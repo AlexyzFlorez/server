@@ -48,7 +48,9 @@ const EventoSchema=new Schema(
             }
         ],
         solicitud_memoria:String,
-        en_memoria:Boolean
+        en_memoria:Boolean,
+        hombres:String,
+        mujeres:String
     }
 )
 

@@ -410,7 +410,7 @@ class EditorController {
           costo: costo,
           descripcion: descripcion,
           url_portada: url_portada,
-          en_memoria: false,
+          en_memoria: undefined,
           usuario: usuario,
           fecha_inicio: fecha_inicio,
           fecha_termino: fecha_termino,
@@ -422,7 +422,9 @@ class EditorController {
           ponentes: ponente[0],
           poblacion: poblacion2[0],
           solicitud_memoria:solicitud_memoria,
-          evidencias:[]
+          evidencias:[],
+          mujeres:"-",
+          hombres:"-"
         }
 
         let evento = new Evento(infoEvento);
@@ -537,6 +539,26 @@ class EditorController {
       res.json(respuesta);
     }
   }
+
+  public async eliminarEvento(req: Request, res: Response) {
+    let errores = [];
+    try {
+
+        const idEvento = req.params.id;
+        await Evento.findByIdAndDelete(idEvento);
+        errores.push("Ninguno")
+
+        let respuesta: any = { errores }
+        res.json(respuesta);
+
+    }
+    catch (e) {
+        console.log("Error metodo eliminar evento");
+        errores.push("Consultas")
+        let respuesta: any = { errores }
+        res.json(respuesta);
+    }
+}
 
 }
 

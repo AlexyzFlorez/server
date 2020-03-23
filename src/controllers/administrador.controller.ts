@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { email } from '../lib/nodemailer';
 const config = require('../config/config');
 import Usuario from '../models/usuario.model';
+import Evento from '../models/evento.model';
 
 class AdministradorController {
     //Usuarios
@@ -84,6 +85,26 @@ class AdministradorController {
         }
         catch (e) {
             console.log("Error metodo eliminar usuario");
+            errores.push("Consultas")
+            let respuesta: any = { errores }
+            res.json(respuesta);
+        }
+    }
+
+    //Eventos
+    public async obtenerEventosEnMemoria(req: Request, res: Response) {
+        let errores = [];
+
+        try {
+
+            let eventos: any;
+
+            eventos = await Evento.find({en_memora:true}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({ fecha_inicio: 1 });
+
+            res.json(eventos);
+        }
+        catch (e) {
+            console.log("Error metodo obtener eventos en memoria");
             errores.push("Consultas")
             let respuesta: any = { errores }
             res.json(respuesta);
