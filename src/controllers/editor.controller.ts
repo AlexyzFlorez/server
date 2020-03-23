@@ -28,7 +28,7 @@ class EditorController {
       else {
         errores.push("No existe")
       }
-      
+
       let respuesta: any = { errores }
       res.json(respuesta);
     }
@@ -71,9 +71,9 @@ class EditorController {
 
             //Crear info para TOKEN
             const usuario = {
-              _id : idUsuario,
-              correo : correo,
-              tipo_usuario : tipoUsuario
+              _id: idUsuario,
+              correo: correo,
+              tipo_usuario: tipoUsuario
             }
 
             var token = jwt.sign({ usuario: usuario }, config.SEED, { expiresIn: 14400 }); //usuario, clave, 4 horas de expiracion
@@ -273,7 +273,7 @@ class EditorController {
   public async obtenerDepartamentos(req: Request, res: Response) {
     let errores = [];
     try {
-      let departamentos: any = await Departamento.find({}).sort({nombre:1});
+      let departamentos: any = await Departamento.find({}).sort({ nombre: 1 });
       res.json(departamentos);
     }
     catch (e) {
@@ -287,7 +287,7 @@ class EditorController {
   public async obtenerActividades(req: Request, res: Response) {
     let errores = [];
     try {
-      let actividades: any = await Actividad.find({}).sort({nombre:1});
+      let actividades: any = await Actividad.find({}).sort({ nombre: 1 });
       res.json(actividades);
     }
     catch (e) {
@@ -301,7 +301,7 @@ class EditorController {
   public async obtenerCategorias(req: Request, res: Response) {
     let errores = [];
     try {
-      let categorias: any = await Categoria.find({}).sort({nombre:1});
+      let categorias: any = await Categoria.find({}).sort({ nombre: 1 });
       res.json(categorias);
     }
     catch (e) {
@@ -316,7 +316,7 @@ class EditorController {
     let errores = [];
     try {
 
-      let ponentes: any = await Ponente.find({}).sort({nombre:1});
+      let ponentes: any = await Ponente.find({}).sort({ nombre: 1 });
 
       res.json(ponentes);
     }
@@ -331,7 +331,7 @@ class EditorController {
   public async obtenerPoblacion(req: Request, res: Response) {
     let errores = [];
     try {
-      let poblacion: any = await Poblacion.find({}).sort({nombre:1});
+      let poblacion: any = await Poblacion.find({}).sort({ nombre: 1 });
       res.json(poblacion);
     }
     catch (e) {
@@ -345,7 +345,7 @@ class EditorController {
   public async registrarEvento(req: any, res: Response) {
     let errores = [];
     try {
-      let usuarios: any = await Usuario.find({_id:req.body.usuario});
+      let usuarios: any = await Usuario.find({ _id: req.body.usuario });
 
       let usuario = usuarios[0];
       let nombre = req.body.nombre;
@@ -389,10 +389,10 @@ class EditorController {
           let actividad = new Actividad(infoActividad);
           //Guardar en la base de datos
           await actividad.save();
-          
+
         }
-        else{
-          nombre_actividad=tipo_actividad;
+        else {
+          nombre_actividad = tipo_actividad;
         }
 
         let departamentos: any = await Departamento.find({ nombre: departamento });
@@ -421,10 +421,10 @@ class EditorController {
           categoria: categorias[0],
           ponentes: ponente[0],
           poblacion: poblacion2[0],
-          solicitud_memoria:solicitud_memoria,
-          evidencias:[],
-          mujeres:"-",
-          hombres:"-"
+          solicitud_memoria: solicitud_memoria,
+          evidencias: [],
+          mujeres: "-",
+          hombres: "-"
         }
 
         let evento = new Evento(infoEvento);
@@ -476,22 +476,22 @@ class EditorController {
         correo: req.body.correo,
         password: bcriptjsConfig.encriptar(req.body.password),
         estado_registro: req.body.estado_registro,
-        departamento:req.body.departamento
+        departamento: req.body.departamento
       }
 
       const departamento: any = await Departamento.find({ nombre: reqUsuario.departamento.nombre, });
-      reqUsuario.departamento=departamento[0];
+      reqUsuario.departamento = departamento[0];
 
       //VALIDAMOS LOS CAMPOS QUE DEBEN Y NO DEBEN ESTAR REGISTRADOS
       const correoRegistrados: any = await Usuario.find({ correo: reqUsuario.correo });
 
-      if (correoRegistrados.length > 0 && correoRegistrados[0]._id!=idUsuario) {
+      if (correoRegistrados.length > 0 && correoRegistrados[0]._id != idUsuario) {
         errores.push("Usuario registrado");
       }
 
-      const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado});
+      const numEmpleados: any = await Usuario.find({ num_empleado: reqUsuario.num_empleado });
 
-      if (numEmpleados.length > 0 && numEmpleados[0]._id!=idUsuario) {
+      if (numEmpleados.length > 0 && numEmpleados[0]._id != idUsuario) {
         errores.push("Num empleado registrado");
       }
 
@@ -528,7 +528,7 @@ class EditorController {
 
       let idUsuario = req.params.idUsuario;
       const usuario: any = await Usuario.find({ _id: idUsuario }).populate('departamento');
-      const eventos: any = await Evento.find({usuario: usuario[0] }).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
+      const eventos: any = await Evento.find({ usuario: usuario[0] }).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({ fecha_inicio: 1 });
 
       res.json(eventos);
     }
@@ -544,21 +544,23 @@ class EditorController {
     let errores = [];
     try {
 
-        const idEvento = req.params.id;
-        await Evento.findByIdAndDelete(idEvento);
-        errores.push("Ninguno")
+      const idEvento = req.params.id;
+      const eventos: any = await Evento.find({ _id:idEvento });
+      await Evento.findByIdAndDelete(idEvento);
 
-        let respuesta: any = { errores }
-        res.json(respuesta);
+      fSystem.eliminarArchivo(eventos[0].url_portada);
+      errores.push("Ninguno")
+      let respuesta: any = { errores }
+      res.json(respuesta);
 
     }
     catch (e) {
-        console.log("Error metodo eliminar evento");
-        errores.push("Consultas")
-        let respuesta: any = { errores }
-        res.json(respuesta);
+      console.log("Error metodo eliminar evento");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
     }
-}
+  }
 
 }
 

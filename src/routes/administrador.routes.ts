@@ -18,6 +18,7 @@ class AdministradorRoutes
         this.router.delete('/rechazar-usuario/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.rechazarUsuario);
         this.router.delete('/eliminar-usuario/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.eliminarUsuario);
         this.router.get('/obtener-eventos-en-memoria',[auth.verificarToken,auth.verificarAdministrador],administradorController.obtenerEventosEnMemoria);
+        this.router.put('/actualizar-memoria/:id',[auth.verificarToken,auth.verificarAdministrador],administradorController.actualizarMemoria);
     }
 }
 

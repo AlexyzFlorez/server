@@ -99,12 +99,33 @@ class AdministradorController {
 
             let eventos: any;
 
-            eventos = await Evento.find({en_memora:true}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({ fecha_inicio: 1 });
+            eventos = await Evento.find({ en_memoria: true }).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({ fecha_inicio: 1 });
 
             res.json(eventos);
         }
         catch (e) {
             console.log("Error metodo obtener eventos en memoria");
+            errores.push("Consultas")
+            let respuesta: any = { errores }
+            res.json(respuesta);
+        }
+    }
+
+    //Perfil
+    public async actualizarMemoria(req: Request, res: Response) {
+        let errores = [];
+        try {
+            const idEvento = req.params.id;
+            let actualizacion = req.body.en_memoria;
+
+            await Evento.findByIdAndUpdate(idEvento, { en_memoria: actualizacion });
+            errores.push("Ninguno")
+
+            let respuesta: any = { errores }
+            res.json(respuesta);
+        }
+        catch (e) {
+            console.log("Error metodo actualizar memoria");
             errores.push("Consultas")
             let respuesta: any = { errores }
             res.json(respuesta);
