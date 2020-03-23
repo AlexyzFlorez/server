@@ -12,6 +12,7 @@ import Ponente from '../models/ponente.model';
 import Poblacion from '../models/poblacion.model';
 import Categoria from '../models/categoria.model';
 import Evento from '../models/evento.model';
+import Evidencia from '../models/evidencia.model';
 
 class EditorController {
 
@@ -556,6 +557,28 @@ class EditorController {
     }
     catch (e) {
       console.log("Error metodo eliminar evento");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  public async eliminarEvidencia(req: Request, res: Response) {
+    let errores = [];
+    try {
+
+      const idEvidencia = req.params.id;
+      const evidencias: any = await Evidencia.find({ _id: idEvidencia });
+      await Evidencia.findByIdAndDelete(idEvidencia);
+
+      fSystem.eliminarArchivo(evidencias[0].url_evidencia);
+      errores.push("Ninguno")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+
+    }
+    catch (e) {
+      console.log("Error metodo eliminar evidencia");
       errores.push("Consultas")
       let respuesta: any = { errores }
       res.json(respuesta);

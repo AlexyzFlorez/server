@@ -118,7 +118,6 @@ class UsuarioController {
         let errores = [];
 
         try {
-
             const eventos: any = await Evento.find({}).populate(['departamento', 'tipo_actividad', 'categoria', 'ponentes', 'poblacion', 'usuario']).sort({fecha_inicio:1});
             res.json(eventos);
         }

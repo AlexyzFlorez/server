@@ -44,6 +44,7 @@ class EditorRoutes
         this.router.delete('/eliminar-evento/:id',[auth.verificarToken,auth.verificarEditor],editorController.eliminarEvento);
 
         this.router.put('/editar-evento/:id',[auth.verificarToken,auth.verificarEditor,multerConfig],editorController.editarEvento);
+        this.router.delete('/eliminar-evidencia/:id',[auth.verificarToken,auth.verificarEditor],editorController.eliminarEvidencia);
     }
 }
 
