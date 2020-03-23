@@ -42,6 +42,8 @@ class EditorRoutes
         //Mis eventos
         this.router.get('/obtener-mis-eventos/:idUsuario',[auth.verificarToken,auth.verificarEditor],editorController.obtenerMisEventos);
         this.router.delete('/eliminar-evento/:id',[auth.verificarToken,auth.verificarEditor],editorController.eliminarEvento);
+
+        this.router.put('/editar-evento/:id',[auth.verificarToken,auth.verificarEditor,multerConfig],editorController.editarEvento);
     }
 }
 

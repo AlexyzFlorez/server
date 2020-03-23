@@ -545,7 +545,7 @@ class EditorController {
     try {
 
       const idEvento = req.params.id;
-      const eventos: any = await Evento.find({ _id:idEvento });
+      const eventos: any = await Evento.find({ _id: idEvento });
       await Evento.findByIdAndDelete(idEvento);
 
       fSystem.eliminarArchivo(eventos[0].url_portada);
@@ -556,6 +556,153 @@ class EditorController {
     }
     catch (e) {
       console.log("Error metodo eliminar evento");
+      errores.push("Consultas")
+      let respuesta: any = { errores }
+      res.json(respuesta);
+    }
+  }
+
+  public async editarEvento(req: any, res: Response) {
+    let errores = [];
+    try {
+      let idEvento=req.params.id;
+
+      let nombre = req.body.nombre;
+      let departamento = req.body.departamento;
+      let costo = req.body.costo;
+      let tipo_actividad = req.body.tipo_actividad;
+      let nombre_actividad = req.body.actividad;
+      let categoria = req.body.categoria;
+      let fecha_inicio = req.body.fecha_inicio;
+      let fecha_termino = req.body.fecha_termino;
+      let hora_inicio = req.body.hora_inicio;
+      let hora_termino = req.body.hora_termino;
+      let descripcion = req.body.descripcion;
+      let ponentes = req.body.ponentes;
+      let poblacion = req.body.poblacion;
+      let solicitud_memoria = req.body.solicitud_memoria;
+      let hombres = req.body.hombres;
+      let mujeres = req.body.mujeres;
+      let url_portada;
+      
+      if (req.file == undefined) {
+      }
+      else {
+        url_portada = req.file.filename;
+      }
+
+      if (tipo_actividad === "Otra") {
+
+        let actividades: any = await Actividad.find({});
+        for (let i = 0; i < actividades.length; i++) {
+          if ((actividades[i].nombre).toUpperCase() === nombre_actividad.toUpperCase()) {
+            errores.push("Actividad existente")
+          }
+        }
+      }
+
+      if (errores.length > 0) {
+        let respuesta: any = { errores }
+        console.log("Hay campos invalidos en el servidor")
+        if (req.file == undefined) {
+        }
+        else {
+          fSystem.eliminarArchivo(req.file.filename);
+        }
+        res.json(respuesta)
+      }
+      else {
+        if (tipo_actividad === "Otra") {
+          //Creamos el objeto con el schema que declaramos
+          let infoActividad = {
+            nombre: nombre_actividad
+          }
+          let actividad = new Actividad(infoActividad);
+          //Guardar en la base de datos
+          await actividad.save();
+
+        }
+        else {
+          nombre_actividad = tipo_actividad;
+        }
+
+        let departamentos: any = await Departamento.find({ nombre: departamento });
+
+        let categorias: any = await Categoria.find({ nombre: categoria });
+
+        let actividades: any = await Actividad.find({ nombre: nombre_actividad });
+
+        let ponente: any = await Ponente.find({ nombre: ponentes });
+
+        let poblacion2: any = await Poblacion.find({ nombre: poblacion });
+
+        let infoEvento;
+
+        if (req.file == undefined) {
+          infoEvento = {
+            nombre: nombre,
+            costo: costo,
+            descripcion: descripcion,
+            fecha_inicio: fecha_inicio,
+            fecha_termino: fecha_termino,
+            hora_inicio: hora_inicio,
+            hora_termino: hora_termino,
+            departamento: departamentos[0],
+            tipo_actividad: actividades[0],
+            categoria: categorias[0],
+            ponentes: ponente[0],
+            poblacion: poblacion2[0],
+            solicitud_memoria: solicitud_memoria,
+            mujeres: mujeres,
+            hombres: hombres
+          }
+        }
+        else {
+          infoEvento = {
+            nombre: nombre,
+            costo: costo,
+            descripcion: descripcion,
+            url_portada: url_portada,
+            fecha_inicio: fecha_inicio,
+            fecha_termino: fecha_termino,
+            hora_inicio: hora_inicio,
+            hora_termino: hora_termino,
+            departamento: departamentos[0],
+            tipo_actividad: actividades[0],
+            categoria: categorias[0],
+            ponentes: ponente[0],
+            poblacion: poblacion2[0],
+            solicitud_memoria: solicitud_memoria,
+            mujeres: mujeres,
+            hombres: hombres
+          }
+        }
+
+        let evento:any=await Evento.find({_id:idEvento})
+
+        await Evento.findByIdAndUpdate(idEvento, infoEvento);
+
+        if (req.file == undefined) {
+          
+        }
+        else {
+          fSystem.eliminarArchivo(evento[0].url_portada); 
+        }
+
+        
+        errores.push("Ninguno")
+        let respuesta: any = { errores }
+        res.json(respuesta);
+      }
+    }
+    catch (e) {
+      console.log("Error metodo registrar evento");
+      if (req.file == undefined) {
+      }
+      else {
+        fSystem.eliminarArchivo(req.file.filename);
+      }
+
       errores.push("Consultas")
       let respuesta: any = { errores }
       res.json(respuesta);
